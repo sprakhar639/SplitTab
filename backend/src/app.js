@@ -13,7 +13,7 @@ app.use(cookieParser())
 app.use(cors({origin:"http://localhost:5173",credentials:true}))
 
 app.use('/api/auth',authRoute)
-app.use('/api/group',groupRoute)
+app.use('/api/groups',groupRoute)
 app.use('/api/expense',expenseRoute)
 app.use('/api/settlements',settlementRoute)
 

@@ -5,7 +5,7 @@ import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.post("/create", authMiddleware, create);
+router.post("/", authMiddleware, create);
 router.post("/:groupId/members",authMiddleware,addMemberController);
 router.delete("/:groupId/members/:userId",authMiddleware,removeMemberController)
 

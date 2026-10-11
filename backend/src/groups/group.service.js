@@ -1,11 +1,14 @@
 import db from "../prisma/db.ts";
-const { Group } = db.orm.public;
+
 import { and } from "@prisma/orm-postgres/orm-client";
 
 async function createGroup({ name, userId }) {
   return await db.transaction(async (tx) => {
-    const group = await tx.Group.create({ name });
-    await tx.GroupMember.create({
+    const { Group, GroupMember } = tx.orm.public;
+
+    const group = await Group.create({ name });
+
+    await GroupMember.create({
       groupId: group.id,
       userId,
       role: "ADMIN",
@@ -16,9 +19,10 @@ async function createGroup({ name, userId }) {
 
 async function addMember({ groupId, userIds, requesterId }) {
   return await db.transaction(async (tx) => {
-    const requester = await tx.GroupMember.findFirst({
-      where: (gm) => and(gm.groupId.eq(groupId), gm.userId.eq(requesterId)),
-    });
+    const { GroupMember } = tx.orm.public;
+    const requester = await GroupMember.where((gm) =>
+      and(gm.groupId.eq(groupId), gm.userId.eq(requesterId)),
+    ).first();
 
     if (!requester) {
       throw new Error("You are not a member of the group");
@@ -31,7 +35,7 @@ async function addMember({ groupId, userIds, requesterId }) {
     const members = [];
 
     for (const userId of userIds) {
-      const member = await tx.GroupMember.create({
+      const member = await GroupMember.create({
         groupId,
         userId: Number(userId),
         role: "MEMBER",
@@ -42,11 +46,12 @@ async function addMember({ groupId, userIds, requesterId }) {
   });
 }
 
-async function removeMember({ groupId, userId, requestedId }) {
+async function removeMember({ groupId, userId, requesterId }) {
   return await db.transaction(async (tx) => {
-    const requester = await tx.GroupMember.FindFirst({
-      where: (gm) => and(gm.groupId.eq(groupId), gm.userId.eq(requestedId)),
-    });
+    const { GroupMember } = tx.orm.public;
+    const requester = await GroupMember.where((gm) =>
+      and(gm.groupId.eq(groupId), gm.userId.eq(requesterId)),
+    ).first();
 
     if (!requester) {
       throw new Error("You are not a member of this group");
@@ -56,17 +61,17 @@ async function removeMember({ groupId, userId, requestedId }) {
       throw new Error("Only group admin can remove members");
     }
 
-    const member = await tx.GroupMember.FindFirst({
-      where: (gm) => and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
-    });
+    const member = await GroupMember.where((gm) =>
+      and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
+    ).first();
 
     if (!member) {
       throw new Error("User is not a member of this group");
     }
 
-    await tx.GroupMember.delete({
-      where: (gm) => and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
-    });
+    await GroupMember.where((gm) =>
+      and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
+    ).delete();
     return member;
   });
 }

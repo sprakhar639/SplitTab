@@ -1,12 +1,13 @@
 import db from "../prisma/db.ts";
-const { Expense, ExpenseSplit } = db.orm.public;
+const { Expense, ExpenseSplit} = db.orm.public;
 import { and } from "@prisma/orm-postgres/orm-client";
+
 
 async function addExpense({ groupId, amount, paidBy, description }) {
   if (!amount || amount <= 0) {
-    throw new Error("Amountmust be greater than 0");
+    throw new Error("Amount must be greater than 0");
   }
-  const expense = await db.orm.public.Expense.create({
+  const expense = await Expense.create({
     groupId,
     amount,
     paidBy,
@@ -23,9 +24,7 @@ async function splitExpense({ expenseId, groupId, splits }) {
   }
 
   // Find the Expense
-  const expense = await Expense.findFirst({
-    where: (e) => and(e.id.eq(expenseId), e.groupId.eq(groupId)),
-  });
+  const expense = await Expense.where((e) => and(e.id.eq(expenseId), e.groupId.eq(groupId))).first();
 
   if (!expense) {
     throw new Error("Expense Not Found");
@@ -57,22 +56,21 @@ async function splitExpense({ expenseId, groupId, splits }) {
 
   //  Create all splits in one transaction
   return await db.transaction(async (tx) => {
+    const {GroupMember,ExpenseSplit}= tx.orm.public;
     const createdSplits = [];
 
     for (const split of splits) {
       const userId = Number(split.userId);
 
       //   Participant must already be a group member
-      const member = await tx.GroupMember.findFirst({
-        where: (gm) => and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
-      });
-
+      const member = await GroupMember.where((gm) => and(gm.groupId.eq(groupId), gm.userId.eq(userId))).first();
+      console.log(member);
       if (!member) {
         throw new Error(`User ${userId} is not a member of this group`);
       }
 
       //    Create ExpenseSplit
-      const expenseSplit = await tx.ExpenseSplit.create({
+      const expenseSplit = await ExpenseSplit.create({
         expenseId,
         userId,
         amount: Number(split.amount),

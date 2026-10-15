@@ -64,7 +64,6 @@ async function splitExpense({ expenseId, groupId, splits }) {
 
       //   Participant must already be a group member
       const member = await GroupMember.where((gm) => and(gm.groupId.eq(groupId), gm.userId.eq(userId))).first();
-      console.log(member);
       if (!member) {
         throw new Error(`User ${userId} is not a member of this group`);
       }

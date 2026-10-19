@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'eab0a0868bad5d2a25f383409dfc843542a835f2866afcba8d40c30cdb029394'>;
+  StorageHashBase<'9b31ae8211d1ffcfbe7b0ac37d4ec67b59183c3d63aa670048b9150906831b29'>;
 export type ExecutionHash =
   ExecutionHashBase<'87b4b8373d6ed155358fda81f681ec0ec1f858a23f96c8718ca300d14cb912d7'>;
 export type ProfileHash =
@@ -260,6 +260,7 @@ export type FieldOutputTypes = {
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly createdById: CodecTypes['pg/int4@1']['output'];
     };
     readonly GroupMember: {
       readonly groupId: CodecTypes['pg/int4@1']['output'];
@@ -313,6 +314,7 @@ export type FieldInputTypes = {
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly createdById: CodecTypes['pg/int4@1']['input'];
     };
     readonly GroupMember: {
       readonly groupId: CodecTypes['pg/int4@1']['input'];
@@ -369,6 +371,7 @@ export type StorageColumnTypes = {
     };
     readonly groups: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly createdById: CodecTypes['pg/int4@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -422,6 +425,7 @@ export type StorageColumnInputTypes = {
     };
     readonly groups: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly createdById: CodecTypes['pg/int4@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
@@ -462,20 +466,24 @@ export namespace Models {
     passwordHash: CodecTypes['pg/text@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
+    createdGroups: public_Group[];
     expensesPaid: public_Expense[];
     groupMembers: public_GroupMember[];
     sessions: public_Session[];
     splits: public_ExpenseSplit[];
-    readonly [RelationKeys]?: 'expensesPaid' | 'groupMembers' | 'sessions' | 'splits';
+    readonly [RelationKeys]?:
+      'createdGroups' | 'expensesPaid' | 'groupMembers' | 'sessions' | 'splits';
   };
   export type public_Group = {
     id: CodecTypes['pg/int4@1']['output'];
     name: CodecTypes['pg/text@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
+    createdById: CodecTypes['pg/int4@1']['output'];
+    createdBy: public_User;
     expenses: public_Expense[];
     members: public_GroupMember[];
-    readonly [RelationKeys]?: 'expenses' | 'members';
+    readonly [RelationKeys]?: 'createdBy' | 'expenses' | 'members';
   };
   export type public_GroupMember = {
     groupId: CodecTypes['pg/int4@1']['output'];
@@ -795,11 +803,36 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                   readonly nullable: false;
                 };
+                readonly createdById: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [];
-              indexes: readonly [];
-              foreignKeys: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'groups_createdById_idx_8bf640ed';
+                  readonly prefix: 'groups_createdById_idx';
+                  readonly columns: readonly ['createdById'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'groups';
+                    readonly columns: readonly ['createdById'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'users';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly sessions: {
               columns: {
@@ -1186,8 +1219,21 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                 };
               };
+              readonly createdById: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
             };
             readonly relations: {
+              readonly createdBy: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['createdById'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly expenses: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -1219,6 +1265,7 @@ type ContractBase = Omit<
                 readonly name: { readonly column: 'name' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly createdById: { readonly column: 'createdById' };
               };
             };
           };
@@ -1443,6 +1490,17 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly createdGroups: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Group';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['createdById'];
+                };
+              };
               readonly expensesPaid: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;

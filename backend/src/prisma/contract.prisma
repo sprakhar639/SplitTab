@@ -13,6 +13,7 @@ model User {
   groupMembers GroupMember[]
   expensesPaid Expense[]
   splits ExpenseSplit[]
+  createdGroups Group[] @relation("GroupCreater")
   @@map("users")
 }
 
@@ -21,6 +22,9 @@ model Group {
   name      String
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
+
+  createdById Int
+  createdBy User @relation("GroupCreater",fields:[createdById],references:[id])
   members GroupMember[]
   expenses Expense[]
   @@map("groups")

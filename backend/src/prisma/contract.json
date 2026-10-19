@@ -239,6 +239,13 @@
                   "kind": "scalar"
                 }
               },
+              "createdById": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -262,6 +269,22 @@
               }
             },
             "relations": {
+              "createdBy": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "createdById"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
               "expenses": {
                 "cardinality": "1:N",
                 "on": {
@@ -297,6 +320,9 @@
               "fields": {
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "createdById": {
+                  "column": "createdById"
                 },
                 "id": {
                   "column": "id"
@@ -647,6 +673,21 @@
               }
             },
             "relations": {
+              "createdGroups": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "createdById"
+                  ]
+                },
+                "to": {
+                  "model": "Group",
+                  "namespace": "public"
+                }
+              },
               "expensesPaid": {
                 "cardinality": "1:N",
                 "on": {
@@ -1021,6 +1062,11 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
+                "createdById": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "default": {
@@ -1041,8 +1087,34 @@
                   "nullable": false
                 }
               },
-              "foreignKeys": [],
-              "indexes": [],
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "createdById"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "groups"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "users"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "createdById"
+                  ],
+                  "name": "groups_createdById_idx_8bf640ed",
+                  "prefix": "groups_createdById_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -1320,7 +1392,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "eab0a0868bad5d2a25f383409dfc843542a835f2866afcba8d40c30cdb029394"
+    "storageHash": "9b31ae8211d1ffcfbe7b0ac37d4ec67b59183c3d63aa670048b9150906831b29"
   },
   "execution": {
     "executionHash": "87b4b8373d6ed155358fda81f681ec0ec1f858a23f96c8718ca300d14cb912d7",

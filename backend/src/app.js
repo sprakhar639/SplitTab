@@ -2,8 +2,8 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoute from "./features/auth/auth.route.js";
-import groupRoute from "./groups/group.route.js";
-import expenseRoute from "./expenses/expense.route.js";
+import groupRoute from "./features/groups/group.route.js";
+import expenseRoute from "./features/expenses/expense.route.js";
 import settlementRoute from "./features/settlements/settlement.route.js";
 
 const app = express();

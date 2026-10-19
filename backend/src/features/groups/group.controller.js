@@ -1,4 +1,4 @@
-import { createGroup, addMember ,removeMember} from "./group.service.js";
+import { createGroup, addMember ,removeMember, getGroups} from "./group.service.js";
 
 async function create(req, res) {
   try {
@@ -61,4 +61,16 @@ async function removeMemberController(req, res) {
   }
 }
 
-export { create, addMemberController,removeMemberController };
+async function getCreatedGroups(req,res){
+  try{
+   const userId=req.user.id;
+   const groups=await getGroups({userId});
+   return res.status(200).json({groups})
+  }catch(error){
+   return res.status(500).json({
+  message: "Failed to fetch groups",
+   error: error.message,
+});
+  }
+}
+export { create, addMemberController,removeMemberController, getCreatedGroups};

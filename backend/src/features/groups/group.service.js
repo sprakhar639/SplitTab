@@ -1,12 +1,13 @@
-import db from "../prisma/db.ts";
+import db from "../../prisma/db.ts";
 
 import { and } from "@prisma/orm-postgres/orm-client";
+const {Group}=db.orm.public
 
 async function createGroup({ name, userId }) {
   return await db.transaction(async (tx) => {
     const { Group, GroupMember } = tx.orm.public;
 
-    const group = await Group.create({ name });
+    const group = await Group.create({ name,createdById:userId });
 
     await GroupMember.create({
       groupId: group.id,
@@ -75,4 +76,8 @@ async function removeMember({ groupId, userId, requesterId }) {
     return member;
   });
 }
-export { createGroup, addMember, removeMember };
+
+async function getGroups({userId}) {
+  return await Group.where((g)=>g.createdById.eq(userId)).all();
+}
+export { createGroup, addMember, removeMember, getGroups };

@@ -1,12 +1,13 @@
 import db from "../prisma/db.ts";
 import { and } from "@prisma/orm-postgres/orm-client";
+const {Settlement}=db.orm.public;
 async function createSettlementService({
   groupId,
   fromUserId,
   toUserId,
   amount,
 }) {
-  const settlement = await db.orm.public.Settlement.create({
+  const settlement = await Settlement.create({
     groupId,
     fromUserId,
     toUserId,

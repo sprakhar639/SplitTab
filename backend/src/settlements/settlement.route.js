@@ -4,8 +4,8 @@ import authMiddleware from '../middleware/auth.middleware.js';
 
 const route=Router();
 
-route.post('/',authMiddleware,createSettlement);
-route.get('/balance/:groupId/:userId',authMiddleware,getBalanceController)
+route.post('/groups/:groupId',authMiddleware,createSettlement);
+route.get('/balance/:groupId/:userId',authMiddleware,getBalanceController);
 
 export default route
 

@@ -1,6 +1,6 @@
 import bcrpyt from "bcrypt";
 import crypto from "crypto";
-import db from "../prisma/db.ts";
+import db from "../../prisma/db.ts";
 import { or } from "@prisma/orm-postgres/orm-client";
 const { User, Session } = db.orm.public;
 

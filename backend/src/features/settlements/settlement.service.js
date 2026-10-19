@@ -1,6 +1,6 @@
-import db from "../prisma/db.ts";
+import db from "../../prisma/db.ts";
 import { and } from "@prisma/orm-postgres/orm-client";
-const {Settlement}=db.orm.public;
+const { Settlement } = db.orm.public;
 async function createSettlementService({
   groupId,
   fromUserId,

@@ -1,4 +1,4 @@
-import { addExpense, splitExpense } from "../expenses/expense.service.js";
+import { addExpense, splitExpense } from "./expense.service.js";
 
 async function addExpenseInGroup(req, res) {
   try {

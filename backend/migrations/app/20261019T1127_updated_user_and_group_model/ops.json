@@ -1,0 +1,173 @@
+[
+  {
+    "id": "column.public.groups.createdById",
+    "label": "Add column \"createdById\" to \"groups\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "createdById",
+        "table": "groups"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"createdById\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "groups",
+          "createdById"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"createdById\"",
+        "sql": "ALTER TABLE \"public\".\"groups\" ADD COLUMN \"createdById\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"createdById\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "groups",
+          "createdById"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.setNotNull.groups.createdById",
+    "label": "Set NOT NULL on \"groups\".\"createdById\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "createdById",
+        "table": "groups"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"createdById\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "groups",
+          "createdById"
+        ]
+      },
+      {
+        "description": "ensure no NULL values in \"createdById\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"public\".\"groups\" WHERE \"createdById\" IS NULL) AS \"result\"",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "set NOT NULL on \"createdById\"",
+        "sql": "ALTER TABLE \"public\".\"groups\" ALTER COLUMN \"createdById\" SET NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"createdById\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "groups",
+          "createdById",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.groups.groups_createdById_idx_8bf640ed",
+    "label": "Create index \"groups_createdById_idx_8bf640ed\" on \"groups\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "groups_createdById_idx_8bf640ed",
+        "table": "groups"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"groups_createdById_idx_8bf640ed\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"groups_createdById_idx_8bf640ed\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"groups_createdById_idx_8bf640ed\"",
+        "sql": "CREATE INDEX \"groups_createdById_idx_8bf640ed\" ON \"public\".\"groups\" (\"createdById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"groups_createdById_idx_8bf640ed\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"groups_createdById_idx_8bf640ed\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.groups.groups_createdById_fkey",
+    "label": "Add foreign key \"groups_createdById_fkey\" on \"groups\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "groups_createdById_fkey",
+        "table": "groups"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"groups_createdById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "groups_createdById_fkey",
+          "public",
+          "\"public\".\"groups\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"groups_createdById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"groups\"\nADD CONSTRAINT \"groups_createdById_fkey\"\nFOREIGN KEY (\"createdById\")\nREFERENCES \"public\".\"users\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"groups_createdById_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "groups_createdById_fkey",
+          "public",
+          "\"public\".\"groups\""
+        ]
+      }
+    ]
+  }
+]

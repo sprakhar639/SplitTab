@@ -1,13 +1,12 @@
 import db from "../../prisma/db.ts";
 
 import { and } from "@prisma/orm-postgres/orm-client";
-const {Group}=db.orm.public
 
 async function createGroup({ name, userId }) {
   return await db.transaction(async (tx) => {
     const { Group, GroupMember } = tx.orm.public;
 
-    const group = await Group.create({ name,createdById:userId });
+    const group = await Group.create({ name, createdById: userId });
 
     await GroupMember.create({
       groupId: group.id,
@@ -20,7 +19,7 @@ async function createGroup({ name, userId }) {
 
 async function addMember({ groupId, userIds, requesterId }) {
   return await db.transaction(async (tx) => {
-    const { GroupMember } = tx.orm.public;
+    const { GroupMember, User } = tx.orm.public;
     const requester = await GroupMember.where((gm) =>
       and(gm.groupId.eq(groupId), gm.userId.eq(requesterId)),
     ).first();
@@ -33,9 +32,30 @@ async function addMember({ groupId, userIds, requesterId }) {
       throw new Error("Only group admins can add members");
     }
 
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      throw new Error("Provide at least one user ID");
+    }
+
     const members = [];
 
-    for (const userId of userIds) {
+    for (const id of userIds) {
+      const userId = Number(id);
+      if (!Number.isInteger(userId) || userId <= 0) {
+        throw new Error("Invalid user ID");
+      }
+      const user = await User.where((u) => u.id.eq(userId)).first();
+
+      if (!user) {
+        throw new Error(`User ${userId} does not exist`);
+      }
+
+      const existingMember = await GroupMember.where((gm) =>
+        and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
+      ).first();
+
+      if (existingMember) {
+        throw new Error(`User ${userId} is already a group member`);
+      }
       const member = await GroupMember.create({
         groupId,
         userId: Number(userId),
@@ -61,7 +81,9 @@ async function removeMember({ groupId, userId, requesterId }) {
     if (requester.role !== "ADMIN") {
       throw new Error("Only group admin can remove members");
     }
-
+    if (Number(userId) === Number(requesterId)) {
+      throw new Error("You cannot remove yourself as group admin");
+    }
     const member = await GroupMember.where((gm) =>
       and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
     ).first();
@@ -77,7 +99,20 @@ async function removeMember({ groupId, userId, requesterId }) {
   });
 }
 
-async function getGroups({userId}) {
-  return await Group.where((g)=>g.createdById.eq(userId)).all();
+async function getGroups({ userId }) {
+  const { Group, GroupMember } = db.orm.public;
+
+  const memberships = await GroupMember.where((gm) =>
+    gm.userId.eq(userId),
+  ).all();
+
+  const groups = [];
+  for (const membership of memberships) {
+    const group = await Group.where((g) => g.id.eq(membership.groupId)).first();
+    if (group) {
+      groups.push(group);
+    }
+  }
+  return groups;
 }
 export { createGroup, addMember, removeMember, getGroups };

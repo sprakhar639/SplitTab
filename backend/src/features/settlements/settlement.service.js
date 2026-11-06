@@ -9,6 +9,21 @@ async function createSettlementService({
   toUserId,
   amount,
 }) {
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new AppError("Amount is missing or must be greater than 0", 400);
+  }
+
+  if (fromUserId === toUserId) {
+    throw new AppError("Cannot create settlement with yourself", 400);
+  }
+
+  const member = await db.orm.public.GroupMember.where((gm) =>
+    and(gm.groupId.eq(groupId), gm.userId.eq(toUserId)),
+  ).first();
+
+  if (!member) {
+    throw new AppError("Receiver is not a member of this group", 403);
+  }
   const settlement = await Settlement.create({
     groupId,
     fromUserId,
@@ -25,7 +40,7 @@ async function getBalanceService({ groupId, userId }) {
   ).first();
 
   if (!membership) {
-    throw new AppError("Requested user is not a member of this group", 403);
+    throw new AppError("Not a member of this group", 403);
   }
   const expenses = await db.orm.public.Expense.where((e) =>
     e.groupId.eq(groupId),

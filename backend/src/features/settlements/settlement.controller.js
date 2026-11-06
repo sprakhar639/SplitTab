@@ -3,10 +3,10 @@ import {
   getBalanceService,
 } from "./settlement.service.js";
 
-async function createSettlement(req, res) {
+async function createSettlement(req, res,next) {
   try {
     const groupId = Number(req.params.groupId);
-    const fromUserId = req.user.id;
+    const fromUserId = Number(req.user.id);
     const { toUserId, amount } = req.body;
 
  
@@ -22,11 +22,7 @@ async function createSettlement(req, res) {
       settlement,
     });
   } catch (error) {
-    console.error("Settlement Error:", error);
-
-    return res.status(500).json({
-      message: "Failed to create settlement",
-    });
+   next(error)
   }
 }
 
@@ -38,7 +34,6 @@ async function getBalanceController(req, res,next) {
       userId: Number(userId),
     });
     return res.status(200).json(balance);
-    next()
   } catch (error) {
    next(error)
   }

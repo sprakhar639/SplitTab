@@ -1,11 +1,13 @@
 import db from "../../prisma/db.ts";
 const { Expense, ExpenseSplit } = db.orm.public;
+import AppError from "../../utils/AppError.js";
 import { and } from "@prisma/orm-postgres/orm-client";
 
 async function addExpense({ groupId, amount, paidBy, description }) {
-  if (!amount || amount <= 0) {
-    throw new Error("Amount must be greater than 0");
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new AppError("Amount must be greater than 0",400);
   }
+  
   const expense = await Expense.create({
     groupId,
     amount,

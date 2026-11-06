@@ -470,9 +470,17 @@ export namespace Models {
     expensesPaid: public_Expense[];
     groupMembers: public_GroupMember[];
     sessions: public_Session[];
+    settlementsReceived: public_Settlement[];
+    settlementsSent: public_Settlement[];
     splits: public_ExpenseSplit[];
     readonly [RelationKeys]?:
-      'createdGroups' | 'expensesPaid' | 'groupMembers' | 'sessions' | 'splits';
+      | 'createdGroups'
+      | 'expensesPaid'
+      | 'groupMembers'
+      | 'sessions'
+      | 'settlementsReceived'
+      | 'settlementsSent'
+      | 'splits';
   };
   export type public_Group = {
     id: CodecTypes['pg/int4@1']['output'];
@@ -483,7 +491,8 @@ export namespace Models {
     createdBy: public_User;
     expenses: public_Expense[];
     members: public_GroupMember[];
-    readonly [RelationKeys]?: 'createdBy' | 'expenses' | 'members';
+    settlements: public_Settlement[];
+    readonly [RelationKeys]?: 'createdBy' | 'expenses' | 'members' | 'settlements';
   };
   export type public_GroupMember = {
     groupId: CodecTypes['pg/int4@1']['output'];
@@ -1256,6 +1265,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['groupId'];
                 };
               };
+              readonly settlements: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Settlement';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['groupId'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'groups';
@@ -1532,6 +1552,28 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly settlementsReceived: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Settlement';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['toUserId'];
+                };
+              };
+              readonly settlementsSent: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Settlement';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['fromUserId'];
                 };
               };
               readonly splits: {

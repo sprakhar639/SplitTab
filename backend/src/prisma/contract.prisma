@@ -13,9 +13,14 @@ model User {
   groupMembers GroupMember[]
   expensesPaid Expense[]
   splits ExpenseSplit[]
+  settlementsSent Settlement[] @relation("SettlementFrom")
+  settlementsReceived Settlement[] @relation("SettlementTo")
   createdGroups Group[] @relation("GroupCreater")
   @@map("users")
 }
+
+
+
 
 model Group {
   id        Int      @id @default(autoincrement())
@@ -27,8 +32,14 @@ model Group {
   createdBy User @relation("GroupCreater",fields:[createdById],references:[id])
   members GroupMember[]
   expenses Expense[]
+  settlements Settlement[]
   @@map("groups")
 }
+
+
+
+
+
 
 model GroupMember{
   groupId  Int
@@ -42,6 +53,12 @@ model GroupMember{
   @@id([groupId,userId])
   @@map("group_members")
 }
+
+
+
+
+
+
 
 
 model Expense{
@@ -58,6 +75,11 @@ model Expense{
   @@map("expenses")
 }
 
+
+
+
+
+
 model ExpenseSplit{
    expenseId Int
    userId  Int
@@ -70,6 +92,12 @@ model ExpenseSplit{
    @@map("expense_splits")
 }
 
+
+
+
+
+
+
 model Settlement{
   id Int @id @default(autoincrement())
   groupId Int
@@ -81,7 +109,12 @@ model Settlement{
   group Group @relation(fields:[groupId],references:[id])
   from User @relation("SettlementFrom",fields:[fromUserId],references:[id])
   to User @relation("SettlementTo",fields:[toUserId],references:[id])
+  @@map("settlement")
 }
+
+
+
+
 
 
 model Session {

@@ -314,6 +314,21 @@
                   "model": "GroupMember",
                   "namespace": "public"
                 }
+              },
+              "settlements": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "groupId"
+                  ]
+                },
+                "to": {
+                  "model": "Settlement",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -730,6 +745,36 @@
                 },
                 "to": {
                   "model": "Session",
+                  "namespace": "public"
+                }
+              },
+              "settlementsReceived": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "toUserId"
+                  ]
+                },
+                "to": {
+                  "model": "Settlement",
+                  "namespace": "public"
+                }
+              },
+              "settlementsSent": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "fromUserId"
+                  ]
+                },
+                "to": {
+                  "model": "Settlement",
                   "namespace": "public"
                 }
               },

@@ -1,6 +1,8 @@
 import db from "../../prisma/db.ts";
 import { and } from "@prisma/orm-postgres/orm-client";
+import AppError from "../../utils/AppError.js";
 const { Settlement } = db.orm.public;
+
 async function createSettlementService({
   groupId,
   fromUserId,
@@ -18,6 +20,13 @@ async function createSettlementService({
 }
 
 async function getBalanceService({ groupId, userId }) {
+  const membership = await db.orm.public.GroupMember.where((gm) =>
+    and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
+  ).first();
+
+  if (!membership) {
+    throw new AppError("Requested user is not a member of this group", 403);
+  }
   const expenses = await db.orm.public.Expense.where((e) =>
     e.groupId.eq(groupId),
   ).all();

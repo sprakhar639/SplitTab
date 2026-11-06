@@ -30,7 +30,7 @@ async function createSettlement(req, res) {
   }
 }
 
-async function getBalanceController(req, res) {
+async function getBalanceController(req, res,next) {
   const { groupId, userId } = req.params;
   try {
     const balance = await getBalanceService({
@@ -38,11 +38,9 @@ async function getBalanceController(req, res) {
       userId: Number(userId),
     });
     return res.status(200).json(balance);
+    next()
   } catch (error) {
-    console.error("Balance Error", error);
-    return res.status(500).json({
-      message: "Failed to get Balance",
-    });
+   next(error)
   }
 }
 

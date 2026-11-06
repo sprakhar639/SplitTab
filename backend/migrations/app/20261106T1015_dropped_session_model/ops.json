@@ -1,0 +1,39 @@
+[
+  {
+    "id": "dropTable.sessions",
+    "label": "Drop table \"sessions\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "sessions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"sessions\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sessions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"sessions\"",
+        "sql": "DROP TABLE \"public\".\"sessions\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"sessions\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sessions\""
+        ]
+      }
+    ]
+  }
+]

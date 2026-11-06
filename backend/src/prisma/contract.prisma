@@ -9,7 +9,6 @@ model User {
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
 
-  sessions Session[]
   groupMembers GroupMember[]
   expensesPaid Expense[]
   splits ExpenseSplit[]
@@ -112,18 +111,3 @@ model Settlement{
   @@map("settlement")
 }
 
-
-
-
-
-
-model Session {
-  id    String  @id @default(uuid())
-  userId   Int
-  tokenHash String @unique
-  createdAt TimestamptzString  @default(now())
-  expiresAt TimestamptzString  
-
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
-  @@map("sessions")
-}

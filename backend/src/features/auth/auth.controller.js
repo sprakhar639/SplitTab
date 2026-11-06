@@ -1,45 +1,46 @@
 import { register, login, logout } from "./auth.service.js";
 
-async function userRegister(req, res) {
+
+async function userRegister(req, res, next) {
   try {
-    const { sessionToken } = await register(req.body);
+    const  sessionToken = await register(req.body);
 
     res.cookie("sessionId", sessionToken, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    res.status(200).json({ message: "Registed Successfully"});
+    res.status(201).json({ message: "Registed Successfully" });
   } catch (error) {
-    res.status(404).json({ message: "Registration Failed" });
+    next(error);
   }
 }
 
-async function userLogin(req, res) {
+async function userLogin(req, res, next) {
   try {
-    const {sessionToken} = await login(req.body);
+    const  sessionToken  = await login(req.body);
 
-    res.cookie("sessionId",sessionToken,{
-      httpOnly:true,
-      secure:false,
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-    res.status(200).json({ message: "LoggedIn Successfully"});
+    res.cookie("sessionId", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json({ message: "LoggedIn Successfully" });
   } catch (error) {
-    res.status(404).json({ message: "Login Failed" });
+    next(error);
   }
 }
 
-async function userLogout(req,res) {
-  try{
-    const sessionId=req.cookies.sessionId;
+async function userLogout(req, res, next) {
+  try {
+    const sessionId = req.cookies.sessionId;
     await logout(sessionId);
     res.clearCookie("sessionId");
-    return res.status(200).json({message:"LogOut Successfully"})
-    
-  }catch(error){
-    console.error("LOGOUT ERROR:", error);
-    return res.status(401).json({message:error.message})
+    return res.status(200).json({ message: "LogOut Successfully" });
+  } catch (error) {
+    next(error);
   }
 }
 

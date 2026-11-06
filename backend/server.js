@@ -1,5 +1,6 @@
 import app from './src/app.js'
 import connectDB from './db/db.js'
+import "./src/config/redis.js"
 
 async function startServer(){
    await connectDB();

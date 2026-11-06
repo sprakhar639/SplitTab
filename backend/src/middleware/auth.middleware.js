@@ -1,30 +1,28 @@
-import express from "express";
-import db from "../prisma/db.ts";
 import crypto from "crypto";
+import redis from "../config/redis.js"
 
 async function authMiddleware(req, res, next) {
   try {
     const token = req.cookies?.sessionId;
 
-    if (!token) { return res.status(401).json({ message: "Session cookie missing. Please log in again." }); }
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Session cookie missing. Please log in again." });
+    }
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    const session = await db.orm.public.Session.where((s) =>
-      s.tokenHash.eq(tokenHash),
-    ).first();
-    if (!session) {
+   const userId= await redis.get(`session:${tokenHash}`);
+
+    if (!userId) {
       return res.status(401).json({ message: "Session Not Found" });
     }
 
-    if (new Date() > session.expiresAt) {
-      return res.status(401).json({ message: "Session Expired" });
-    }
-
-    req.user = { id: session.userId };
+    req.user = { id:userId };
     next();
   } catch (error) {
-    console.error("Error:", error);
+    next(error)
   }
 }
 

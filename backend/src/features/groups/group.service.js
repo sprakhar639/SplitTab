@@ -1,5 +1,5 @@
 import db from "../../prisma/db.ts";
-
+import AppError from "../../utils/AppError.js";
 import { and } from "@prisma/orm-postgres/orm-client";
 
 async function createGroup({ name, userId }) {
@@ -99,20 +99,114 @@ async function removeMember({ groupId, userId, requesterId }) {
   });
 }
 
-async function getGroups({ userId }) {
+async function groupsCreatedByUser({ userId }) {
+  const { Group } = db.orm.public;
+  return await Group.where((g) => g.createdById.eq(userId)).all();
+}
+
+async function groupsUserBelongTo({ userId }) {
   const { Group, GroupMember } = db.orm.public;
 
   const memberships = await GroupMember.where((gm) =>
     gm.userId.eq(userId),
   ).all();
 
-  const groups = [];
-  for (const membership of memberships) {
-    const group = await Group.where((g) => g.id.eq(membership.groupId)).first();
-    if (group) {
-      groups.push(group);
-    }
-  }
-  return groups;
+  const groupIds = memberships.map((membership) => membership.groupId);
+  if (groupIds.length === 0) return [];
+  const group = await Group.where((gm) => gm.id.in(groupIds)).all();
+  return group;
 }
-export { createGroup, addMember, removeMember, getGroups };
+
+async function allGroupMembers({ groupId }) {
+  const { GroupMember, User } = db.orm.public;
+  const membership = await GroupMember.where((gm) =>
+    gm.groupId.eq(groupId),
+  ).all();
+  const userIds = membership.map((member) => member.userId);
+
+  if (userIds.length === 0) return [];
+
+  const members = memberships.map((membership) => {
+    const user = users.find((u) => u.id === membership.userId);
+
+    return {
+      ...user,
+      role: membership.role,
+      joinedAt: membership.joinedAt,
+    };
+  });
+
+  return members;
+}
+
+async function getGroupDetails({ groupId }) {
+  const { Group } = db.orm.public;
+  const group = await Group.where((gm) => gm.id.eq(groupId)).first();
+
+  if (!group) {
+    throw new AppError("Group does not exist.", 404);
+  }
+  return group;
+}
+
+async function updateGroup({ groupId, userId, name }) {
+  const { GroupMember } = db.orm.public;
+  const user = await GroupMember.where((gm) =>
+    and(gm.userId.eq(userId), gm.groupId.eq(groupId)),
+  ).first();
+  if (!user) {
+    throw new AppError("User does not belong to group", 403);
+  }
+  if (user.role.toUpperCase() !== "ADMIN") {
+    throw new AppError("Unauthorized User", 403);
+  }
+  const updatedGroup = await Group.where((g) => g.id.eq(groupId)).update({
+    name,
+  });
+
+  return updatedGroup;
+}
+
+async function deleteGroup({ groupId, userId }) {
+  return await db.transaction(async (tx) => {
+    const { GroupMember, Group } = tx.orm.public;
+
+    // 1. Check membership
+    const member = await GroupMember.where((gm) =>
+      and(gm.userId.eq(userId), gm.groupId.eq(groupId)),
+    ).first();
+
+    if (!member) {
+      throw new AppError("User does not belong to group", 403);
+    }
+
+    // 2. Check admin permission
+    if (member.role !== "ADMIN") {
+      throw new AppError(
+        "User does not have permission to delete the group",
+        403,
+      );
+    }
+
+    const result = await Group.where((g) =>
+      and(g.id.eq(groupId), g.isDeleted.eq(false)),
+    ).update({ isDeleted: true });
+
+    if (!result) {
+      throw new AppError("Group does not exist or is already deleted", 404);
+    }
+
+    return { message: "Group deleted successfully" };
+  });
+}
+export {
+  createGroup,
+  addMember,
+  removeMember,
+  groupsCreatedByUser,
+  groupsUserBelongTo,
+  allGroupMembers,
+  getGroupDetails,
+  updateGroup,
+  deleteGroup,
+};

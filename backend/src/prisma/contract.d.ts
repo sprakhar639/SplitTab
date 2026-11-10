@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'bc5558ff380ea62d05f777c076bb1862bc25de7a98a0e0da55c1a5acd0ad5b3f'>;
+  StorageHashBase<'d96dc94828b21ab56e7d27f264efc786b97c5ad7ae41b18f52a878a95c6d5236'>;
 export type ExecutionHash =
   ExecutionHashBase<'8ab922e6a9a536f0e1e59bb344fa0a15110d99153831ec0a0d7c06cc479f6b70'>;
 export type ProfileHash =
@@ -260,6 +260,8 @@ export type FieldOutputTypes = {
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly isDeleted: CodecTypes['pg/bool@1']['output'];
+      readonly deletedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
       readonly createdById: CodecTypes['pg/int4@1']['output'];
     };
     readonly GroupMember: {
@@ -307,6 +309,8 @@ export type FieldInputTypes = {
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly isDeleted: CodecTypes['pg/bool@1']['input'];
+      readonly deletedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
       readonly createdById: CodecTypes['pg/int4@1']['input'];
     };
     readonly GroupMember: {
@@ -358,7 +362,9 @@ export type StorageColumnTypes = {
     readonly groups: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly createdById: CodecTypes['pg/int4@1']['output'];
+      readonly deletedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
       readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly isDeleted: CodecTypes['pg/bool@1']['output'];
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
@@ -405,7 +411,9 @@ export type StorageColumnInputTypes = {
     readonly groups: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly createdById: CodecTypes['pg/int4@1']['input'];
+      readonly deletedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
       readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly isDeleted: CodecTypes['pg/bool@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
@@ -457,6 +465,8 @@ export namespace Models {
     name: CodecTypes['pg/text@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
+    isDeleted: CodecTypes['pg/bool@1']['output'];
+    deletedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
     createdById: CodecTypes['pg/int4@1']['output'];
     createdBy: public_User;
     expenses: public_Expense[];
@@ -771,6 +781,20 @@ type ContractBase = Omit<
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-string@1';
                   readonly nullable: false;
+                };
+                readonly isDeleted: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                };
+                readonly deletedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: true;
                 };
                 readonly createdById: {
                   readonly nativeType: 'int4';
@@ -1133,6 +1157,17 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                 };
               };
+              readonly isDeleted: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly deletedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
               readonly createdById: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -1190,6 +1225,8 @@ type ContractBase = Omit<
                 readonly name: { readonly column: 'name' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly isDeleted: { readonly column: 'isDeleted' };
+                readonly deletedAt: { readonly column: 'deletedAt' };
                 readonly createdById: { readonly column: 'createdById' };
               };
             };

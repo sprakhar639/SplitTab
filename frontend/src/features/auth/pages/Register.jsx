@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../../context/AuthContext";
 import AuthVisual from "../components/AuthVisual";
 import "../styles/Auth.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -19,6 +23,7 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -46,6 +51,12 @@ export default function Register() {
       newErrors.name = "Name must contain at least 2 characters";
     }
 
+    if (!formData.username.trim()) {
+      newErrors.username = "Username is required";
+    } else if (!USERNAME_REGEX.test(formData.username.trim())) {
+      newErrors.username = "Use 3-20 letters, numbers or underscores";
+    }
+
     if (!email) {
       newErrors.email = "Email is required";
     } else if (!EMAIL_REGEX.test(email)) {
@@ -67,7 +78,7 @@ export default function Register() {
     return newErrors;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const validationErrors = validate();
@@ -75,8 +86,19 @@ export default function Register() {
 
     if (Object.keys(validationErrors).length > 0) return;
 
-    // Temporary navigation until backend registration is connected.
-    navigate("/dashboard");
+    setSubmitting(true);
+    try {
+      await register({
+        name: formData.name.trim(),
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      });
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      setErrors({ form: error.message });
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -110,6 +132,25 @@ export default function Register() {
 
               {errors.name && (
                 <span className="field-error">{errors.name}</span>
+              )}
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="username">Username</label>
+
+              <input
+                id="username"
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Pick a username"
+                autoComplete="username"
+                className={errors.username ? "input-error" : ""}
+              />
+
+              {errors.username && (
+                <span className="field-error">{errors.username}</span>
               )}
             </div>
 
@@ -196,8 +237,10 @@ export default function Register() {
               )}
             </div>
 
-            <button type="submit" className="auth-submit">
-              Create account <span>→</span>
+            {errors.form && <span className="field-error">{errors.form}</span>}
+
+            <button type="submit" className="auth-submit" disabled={submitting}>
+              {submitting ? "Creating account…" : <>Create account <span>→</span></>}
             </button>
           </form>
 

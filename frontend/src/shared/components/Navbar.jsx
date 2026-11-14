@@ -1,17 +1,19 @@
 import { NavLink, useNavigate } from "react-router-dom";
 
+import { isFeatureReady } from "../../config/features";
 import { useAuth } from "../../context/AuthContext";
 import Avatar from "./Avatar";
+import { ComingSoonBadge } from "./ComingSoon";
 import Icon from "./Icon";
 
 const LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { to: "/groups", label: "Groups", icon: "groups" },
-  { to: "/expenses", label: "Expenses", icon: "expenses" },
-  { to: "/settlements", label: "Settlements", icon: "settlements" },
-  { to: "/munshi-ai", label: "Munshi AI", icon: "assistant" },
-  { to: "/reminders", label: "Reminders", icon: "reminders" },
-  { to: "/integrations", label: "Integrations", icon: "integrations" },
+  { to: "/expenses", label: "Expenses", icon: "expenses", feature: "expenseHistory" },
+  { to: "/settlements", label: "Settlements", icon: "settlements", feature: "peopleBalances" },
+  { to: "/munshi-ai", label: "Munshi AI", icon: "assistant", feature: "assistant" },
+  { to: "/reminders", label: "Reminders", icon: "reminders", feature: "reminders" },
+  { to: "/integrations", label: "Integrations", icon: "integrations", feature: "integrations" },
 ];
 
 const linkClass = ({ isActive }) =>
@@ -46,6 +48,9 @@ export default function Navbar() {
           <NavLink key={link.to} to={link.to} className={linkClass}>
             <Icon name={link.icon} />
             {link.label}
+            {link.feature && !isFeatureReady(link.feature) && (
+              <ComingSoonBadge tone="dark" className="ml-auto" />
+            )}
           </NavLink>
         ))}
       </nav>

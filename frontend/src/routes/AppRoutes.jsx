@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
+import FeatureGate from "../shared/components/FeatureGate";
 import AppLayout from "../layouts/AppLayout";
 import AuthLayout from "../layouts/AuthLayout";
 
@@ -32,12 +33,47 @@ export default function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/groups" element={<Groups />} />
-          <Route path="/expenses" element={<Expenses />} />
-          <Route path="/settlements" element={<SettlementsOverview />} />
-          <Route path="/munshi-ai" element={<Assistant />} />
+          <Route
+            path="/expenses"
+            element={
+              <FeatureGate feature="expenseHistory" variant="page">
+                <Expenses />
+              </FeatureGate>
+            }
+          />
+          <Route
+            path="/settlements"
+            element={
+              <FeatureGate feature="peopleBalances" variant="page">
+                <SettlementsOverview />
+              </FeatureGate>
+            }
+          />
+          <Route
+            path="/munshi-ai"
+            element={
+              <FeatureGate feature="assistant" variant="page">
+                <Assistant />
+              </FeatureGate>
+            }
+          />
           <Route path="/assistant" element={<Navigate to="/munshi-ai" replace />} />
-          <Route path="/reminders" element={<Reminders />} />
-          <Route path="/integrations" element={<Integrations />} />
+          <Route
+            path="/reminders"
+            element={
+              <FeatureGate feature="reminders" variant="page">
+                <Reminders />
+              </FeatureGate>
+            }
+          />
+          <Route
+            path="/integrations"
+            element={
+              <FeatureGate feature="integrations" variant="page">
+                <Integrations />
+              </FeatureGate>
+            }
+          />
           <Route path="/profile" element={<Profile />} />
           <Route path="/groups/:groupId" element={<GroupDetails />} />
           <Route
@@ -47,7 +83,11 @@ export default function AppRoutes() {
           <Route path="/groups/:groupId/expenses/new" element={<AddExpense />} />
           <Route
             path="/groups/:groupId/expenses/:expenseId"
-            element={<ExpenseDetails />}
+            element={
+              <FeatureGate feature="expenseHistory" variant="page">
+                <ExpenseDetails />
+              </FeatureGate>
+            }
           />
           <Route path="/groups/:groupId/balances" element={<Balances />} />
           <Route path="/groups/:groupId/settle" element={<Settlements />} />

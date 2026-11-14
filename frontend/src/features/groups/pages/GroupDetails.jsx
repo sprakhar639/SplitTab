@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
+import FeatureGate from "../../../shared/components/FeatureGate";
 import Loader from "../../../shared/components/Loader";
 import formatDate from "../../../shared/utils/formatDate";
 import BalanceCard from "../../balances/components/BalanceCard";
@@ -22,51 +23,69 @@ function groupByDay(expenses) {
   return [...days.entries()];
 }
 
-function ExpensesTab({ groupId, members, myId }) {
+function ExpenseList({ groupId, members, myId }) {
   const [expenses, setExpenses] = useState(null);
-  const { balance, error: balanceError } = useMyBalance(groupId, myId);
 
   useEffect(() => {
     getExpenses(groupId, members).then(setExpenses);
   }, [groupId, members]);
 
   return (
+    <>
+      <div className="overflow-hidden rounded-xl border border-line bg-white">
+        {!expenses ? (
+          <Loader label="Loading expenses…" />
+        ) : expenses.length === 0 ? (
+          <p className="px-4 py-10 text-center text-sm text-mute">
+            No expenses yet. Add the first one with “+ Add expense”.
+          </p>
+        ) : (
+          groupByDay(expenses).map(([day, items]) => (
+            <section key={day}>
+              <h2 className="border-y border-line bg-canvas/60 px-4 py-1.5 text-[10.5px] font-extrabold tracking-widest text-mute first:border-t-0">
+                {day}
+              </h2>
+              <div className="divide-y divide-line">
+                {items.map((expense) => (
+                  <ExpenseCard
+                    key={expense.id}
+                    expense={expense}
+                    members={members}
+                    myId={myId}
+                    groupId={groupId}
+                  />
+                ))}
+              </div>
+            </section>
+          ))
+        )}
+      </div>
+
+      <p className="text-xs text-mute">
+        Expense history is mock data until the backend can list expenses.
+        Expenses marked Sample aren't in the database and don't affect your
+        balance.
+      </p>
+    </>
+  );
+}
+
+function ExpensesTab({ groupId, members, myId }) {
+  const location = useLocation();
+  const { balance, error: balanceError } = useMyBalance(groupId, myId);
+
+  return (
     <div className="grid items-start gap-4 lg:grid-cols-[1fr_280px]">
       <div className="flex flex-col gap-3">
-        <div className="overflow-hidden rounded-xl border border-line bg-white">
-          {!expenses ? (
-            <Loader label="Loading expenses…" />
-          ) : expenses.length === 0 ? (
-            <p className="px-4 py-10 text-center text-sm text-mute">
-              No expenses yet. Add the first one with “+ Add expense”.
-            </p>
-          ) : (
-            groupByDay(expenses).map(([day, items]) => (
-              <section key={day}>
-                <h2 className="border-y border-line bg-canvas/60 px-4 py-1.5 text-[10.5px] font-extrabold tracking-widest text-mute first:border-t-0">
-                  {day}
-                </h2>
-                <div className="divide-y divide-line">
-                  {items.map((expense) => (
-                    <ExpenseCard
-                      key={expense.id}
-                      expense={expense}
-                      members={members}
-                      myId={myId}
-                      groupId={groupId}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))
-          )}
-        </div>
+        {location.state?.message && (
+          <p role="status" className="rounded-lg bg-mint/30 px-3 py-2 text-sm font-semibold text-success">
+            ✓ {location.state.message}
+          </p>
+        )}
 
-        <p className="text-xs text-mute">
-          Expense history is mock data until the backend can list expenses.
-          Expenses marked Sample aren't in the database and don't affect your
-          balance.
-        </p>
+        <FeatureGate feature="expenseHistory">
+          <ExpenseList groupId={groupId} members={members} myId={myId} />
+        </FeatureGate>
       </div>
 
       <BalanceCard

@@ -1,8 +1,11 @@
 import { useState } from "react";
 
 import { useAuth } from "../../../context/AuthContext";
+import { usePreview } from "../../../context/PreviewContext";
 import Avatar from "../../../shared/components/Avatar";
+import FeatureGate from "../../../shared/components/FeatureGate";
 import Button from "../../../shared/components/Button";
+import ComingSoon from "../../../shared/components/ComingSoon";
 import Input from "../../../shared/components/Input";
 import { changePassword, updateProfile } from "../profile.service";
 
@@ -18,6 +21,7 @@ function Notice({ children }) {
 }
 
 function DetailsForm({ user, onSaved }) {
+  const isPreview = usePreview();
   const [form, setForm] = useState({
     name: user.name ?? "",
     username: user.username ?? "",
@@ -67,8 +71,12 @@ function DetailsForm({ user, onSaved }) {
     setSaving(true);
     try {
       await updateProfile(user.id, changes);
-      onSaved(changes);
-      setNotice("Profile updated");
+      if (isPreview) {
+        setNotice("Looks good. When this is live, saving will update your profile.");
+      } else {
+        onSaved(changes);
+        setNotice("Profile updated");
+      }
     } catch (err) {
       setErrors({ form: err.message });
     } finally {
@@ -119,6 +127,7 @@ function DetailsForm({ user, onSaved }) {
 }
 
 function PasswordForm() {
+  const isPreview = usePreview();
   const empty = { currentPassword: "", newPassword: "", confirmPassword: "" };
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState({});
@@ -148,7 +157,7 @@ function PasswordForm() {
     try {
       await changePassword(form);
       setForm(empty);
-      setNotice("Password changed");
+      setNotice(isPreview ? "Looks good. When this is live, your password will change." : "Password changed");
     } catch (err) {
       setErrors({ form: err.message });
     } finally {
@@ -206,6 +215,28 @@ function PasswordForm() {
   );
 }
 
+function AccountDetails({ user }) {
+  const rows = [
+    ["Full name", user.name],
+    ["Username", user.username],
+    ["Email address", user.email],
+  ];
+
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-line bg-white p-6">
+      <h2 className="text-base font-extrabold">Account details</h2>
+      <dl className="flex flex-col divide-y divide-line">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex flex-wrap justify-between gap-2 py-2.5 text-sm">
+            <dt className="text-mute">{label}</dt>
+            <dd className="font-semibold">{value || "—"}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export default function Profile() {
   const { user, updateUser } = useAuth();
   const displayName = user.name || user.username || user.email;
@@ -223,15 +254,25 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <DetailsForm user={user} onSaved={updateUser} />
-        <PasswordForm />
-      </div>
+      <FeatureGate
+        feature="profileEditing"
+        fallback={(peek) => (
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            <AccountDetails user={user} />
+            <ComingSoon feature="profileEditing" onPeek={peek} />
+          </div>
+        )}
+      >
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <DetailsForm user={user} onSaved={updateUser} />
+          <PasswordForm />
+        </div>
 
-      <p className="text-xs text-mute">
-        Profile changes are mocked: they show straight away but are lost when
-        you reload, until the backend has endpoints to update your account.
-      </p>
+        <p className="text-xs text-mute">
+          Profile changes are mocked: they show straight away but are lost when
+          you reload, until the backend has endpoints to update your account.
+        </p>
+      </FeatureGate>
     </div>
   );
 }

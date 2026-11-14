@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 
+import { isFeatureReady } from "../../../config/features";
 import Avatar from "../../../shared/components/Avatar";
 import Button from "../../../shared/components/Button";
+import { ComingSoonBadge } from "../../../shared/components/ComingSoon";
 import Modal from "../../../shared/components/Modal";
+import { PreviewBanner } from "../../../shared/components/ComingSoon";
 import formatDate from "../../../shared/utils/formatDate";
 import {
   addMembers,
@@ -14,6 +17,11 @@ import {
 } from "../group.service";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Until these ship, admins add people by numeric user ID (a real endpoint),
+// and can preview search and invites on mock data.
+const SEARCH_READY = isFeatureReady("memberSearch");
+const INVITES_READY = isFeatureReady("invites");
 
 function StatusPill({ pending }) {
   return (
@@ -35,13 +43,17 @@ export default function GroupMembers({ groupId, members, myId, isAdmin, onChange
   const [notice, setNotice] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [removing, setRemoving] = useState(null);
+  const [peeking, setPeeking] = useState(false);
+
+  const searchOn = SEARCH_READY || peeking;
+  const invitesOn = INVITES_READY || peeking;
 
   useEffect(() => {
-    getInvites(groupId).then(setInvites);
-  }, [groupId]);
+    if (invitesOn) getInvites(groupId).then(setInvites);
+  }, [groupId, invitesOn]);
 
   useEffect(() => {
-    if (!query.trim()) return;
+    if (!searchOn || !query.trim()) return;
 
     const memberIds = members.map((member) => member.id);
     const timer = setTimeout(() => {
@@ -49,7 +61,7 @@ export default function GroupMembers({ groupId, members, myId, isAdmin, onChange
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [query, members]);
+  }, [query, members, searchOn]);
 
   const trimmed = query.trim();
   const email = trimmed.toLowerCase();
@@ -64,6 +76,7 @@ export default function GroupMembers({ groupId, members, myId, isAdmin, onChange
   const isMemberEmail = members.some((member) => member.email?.toLowerCase() === email);
   const isInvited = invites.some((invite) => invite.email === email);
   const canInvite =
+    invitesOn &&
     EMAIL_REGEX.test(trimmed) &&
     !isMemberEmail &&
     !isInvited &&
@@ -133,6 +146,10 @@ export default function GroupMembers({ groupId, members, myId, isAdmin, onChange
 
   return (
     <div className="flex flex-col gap-4">
+      {peeking && (
+        <PreviewBanner feature="memberSearch" onExit={() => setPeeking(false)} />
+      )}
+
       {isAdmin && (
         <div className="relative rounded-xl border border-line bg-white p-4">
           <label htmlFor="member-search" className="text-xs font-bold text-ink">
@@ -142,7 +159,11 @@ export default function GroupMembers({ groupId, members, myId, isAdmin, onChange
             id="member-search"
             value={query}
             onChange={handleQueryChange}
-            placeholder="Search by name or username, or enter an email to invite"
+            placeholder={
+              searchOn
+                ? "Search by name or username, or enter an email to invite"
+                : "Enter the user ID of the person to add"
+            }
             autoComplete="off"
             className="mt-1.5 w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-deep focus:ring-2 focus:ring-mint/50"
           />
@@ -161,6 +182,8 @@ export default function GroupMembers({ groupId, members, myId, isAdmin, onChange
                   <Button
                     variant="ghost"
                     loading={busyId === user.id}
+                    disabled={peeking}
+                    title={peeking ? "Adding from search isn't available in a preview" : undefined}
                     onClick={() => handleAdd(user.id)}
                   >
                     Add
@@ -214,15 +237,33 @@ export default function GroupMembers({ groupId, members, myId, isAdmin, onChange
                 !isMemberEmail &&
                 !isInvited && (
                   <li className="px-3 py-2 text-sm text-mute">
-                    No matching users. Enter their email address to invite them.
+                    {searchOn
+                      ? "No matching users. Enter their email address to invite them."
+                      : "Enter a numeric user ID, like 4."}
                   </li>
                 )}
             </ul>
           )}
 
-          <p className="mt-2 text-xs text-mute">
-            Search and invites use mock data until the backend supports them.
-          </p>
+          {SEARCH_READY && INVITES_READY ? (
+            <p className="mt-2 text-xs text-mute">
+              Search and invites use mock data until the backend supports them.
+            </p>
+          ) : (
+            !peeking && (
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-mute">
+                <ComingSoonBadge />
+                Finding people by name or email, and inviting people without an account.
+                <button
+                  type="button"
+                  onClick={() => setPeeking(true)}
+                  className="font-bold text-deep hover:underline"
+                >
+                  Take a peek →
+                </button>
+              </p>
+            )
+          )}
         </div>
       )}
 

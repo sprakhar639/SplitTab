@@ -1,45 +1,74 @@
-import { addExpense, splitExpense } from "./expense.service.js";
+import {
+  createExpenseWithSplits,
+  equalSplit,
+} from "./expense.service.js";
 
-async function addExpenseInGroup(req, res) {
+import AppError from "../../utils/AppError.js";
+
+async function createExpenseWithSplitsController(req, res, next) {
   try {
-    const { groupId } = req.params;
-    const { amount, description } = req.body;
-    const expense = await addExpense({
-      groupId: Number(groupId),
-      amount,
-      paidBy: req.user.id,
+    const groupId = Number(req.params.groupId);
+    const paidBy = req.user.id;
+
+    const { amount, description, splitType, participants, splits } = req.body;
+
+    const rupeeAmount = Number(amount);
+
+    // Validate expense amount
+    if (
+      amount === undefined ||
+      amount === null ||
+      typeof amount === "boolean" ||
+      !Number.isFinite(rupeeAmount) ||
+      !/^\d+(\.\d{1,2})?$/.test(String(amount)) ||
+      rupeeAmount <= 0
+    ) {
+      throw new AppError("Invalid expense amount", 400);
+    }
+
+    // Convert rupees to paise
+    const amountInPaise = Math.round(rupeeAmount * 100);
+
+    let calculatedSplits;
+
+    // Handle equal splitting
+    if (splitType === "EQUAL") {
+      calculatedSplits = equalSplit({
+        amount: amountInPaise,
+        participants,
+      });
+    }
+
+    // Handle unequal splitting
+    else if (splitType === "UNEQUAL") {
+      if (!Array.isArray(splits)) {
+        throw new AppError("Splits must be an array", 400);
+      }
+
+      calculatedSplits = splits.map((split) => ({
+        userId: Number(split.userId),
+        amount: Math.round(Number(split.amount) * 100),
+      }));
+    } else {
+      throw new AppError("Invalid split type", 400);
+    }
+
+    // Create expense and splits atomically
+    const result = await createExpenseWithSplits({
+      groupId,
+      amount: amountInPaise,
+      paidBy,
       description,
+      splits: calculatedSplits,
     });
-    return res
-      .status(201)
-      .json({ message: "Expense Added Successfully", expense });
-  } catch (error) {
-    console.error("Create Expense Error", error);
-    return res.status(405).json({ message: "Failed to add expense" });
-  }
-}
 
-async function splitExpenseController(req, res) {
-  try {
-    const { groupId, expenseId } = req.params;
-    const { splits } = req.body;
-
-    const result = await splitExpense({
-      expenseId: Number(expenseId),
-      groupId: Number(groupId),
-      splits,
-    });
     return res.status(201).json({
-      message: "Expense split successfully",
-      splits: result,
+      message: "Expense created successfully",
+      ...result,
     });
   } catch (error) {
-    console.error("Split Expense Error:", error);
-
-    return res.status(404).json({
-      message: error.message,
-    });
+    next(error);
   }
 }
 
-export { addExpenseInGroup, splitExpenseController };
+export { createExpenseWithSplitsController };

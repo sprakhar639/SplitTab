@@ -91,6 +91,7 @@ async function allGroupMembersController(req, res, next) {
 
     const members = await allGroupMembers({
       groupId: Number(groupId),
+       userId: req.user.id,
     });
 
     return res.status(200).json({
@@ -106,8 +107,10 @@ async function getGroupDetailsController(req, res, next) {
   try {
     const { groupId } = req.params;
 
+    const userId = req.user.id;
     const group = await getGroupDetails({
       groupId: Number(groupId),
+      userId,
     });
 
     return res.status(200).json({

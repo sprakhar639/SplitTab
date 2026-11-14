@@ -104,9 +104,9 @@ async function seed() {
       `INSERT INTO group_members
         ("groupId", "userId", "role", "joinedAt")
        VALUES
-        ($1, $2, 'admin', NOW()),
-        ($1, $3, 'member', NOW()),
-        ($1, $4, 'member', NOW())`,
+        ($1, $2, 'ADMIN', NOW()),
+        ($1, $3, 'MEMBER', NOW()),
+        ($1, $4, 'MEMBER', NOW())`,
       [groupId, aliceId, bobId, charlieId]
     );
 

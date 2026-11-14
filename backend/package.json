@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "emit": "prisma contract emit",
-    "dev": "nodemon server.js",
-    "migration": "prisma migration plan --name",
-    "migrate": "prisma db migrate --advance-ref db",
-    "seed": "node seed.js"
-  },
+ "scripts": {
+  "test": "vitest",
+  "test:run": "vitest run",
+  "test:unit": "vitest run --project unit",
+  "test:integration": "vitest run --project integration",
+  "emit": "prisma contract emit",
+  "dev": "nodemon server.js",
+  "migration": "prisma migration plan --name",
+  "migrate": "prisma db migrate --advance-ref db",
+  "seed": "node seed.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -30,6 +33,7 @@
     "@prisma/cli-engine": "^0.4.0",
     "@types/node": "^26.6.2",
     "prettier": "^3.9.10",
-    "prisma": "^8.0.0-rc.15"
+    "prisma": "^8.0.0-rc.15",
+    "vitest": "^4.1.12"
   }
 }

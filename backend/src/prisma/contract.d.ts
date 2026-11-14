@@ -568,15 +568,15 @@ type ContractBase = Omit<
               uniques: readonly [];
               indexes: readonly [
                 {
-                  readonly name: 'expense_splits_expenseId_idx_69d413fa';
-                  readonly prefix: 'expense_splits_expenseId_idx';
-                  readonly columns: readonly ['expenseId'];
-                  readonly unique: false;
-                },
-                {
                   readonly name: 'expense_splits_userId_idx_a489d58a';
                   readonly prefix: 'expense_splits_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'expense_splits_expenseId_idx_69d413fa';
+                  readonly prefix: 'expense_splits_expenseId_idx';
+                  readonly columns: readonly ['expenseId'];
                   readonly unique: false;
                 },
               ];
@@ -716,15 +716,15 @@ type ContractBase = Omit<
               uniques: readonly [];
               indexes: readonly [
                 {
-                  readonly name: 'group_members_groupId_idx_e2fb5578';
-                  readonly prefix: 'group_members_groupId_idx';
-                  readonly columns: readonly ['groupId'];
-                  readonly unique: false;
-                },
-                {
                   readonly name: 'group_members_userId_idx_a489d58a';
                   readonly prefix: 'group_members_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'group_members_groupId_idx_e2fb5578';
+                  readonly prefix: 'group_members_groupId_idx';
+                  readonly columns: readonly ['groupId'];
                   readonly unique: false;
                 },
               ];

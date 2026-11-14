@@ -117,40 +117,71 @@ async function groupsUserBelongTo({ userId }) {
   return group;
 }
 
-async function allGroupMembers({ groupId }) {
-  const { GroupMember, User } = db.orm.public;
-  const membership = await GroupMember.where((gm) =>
-    gm.groupId.eq(groupId),
-  ).all();
-  const userIds = membership.map((member) => member.userId);
+async function allGroupMembers({ groupId, userId }) {
+  const { GroupMember, User, Group } = db.orm.public;
 
-  if (userIds.length === 0) return [];
-
-  const members = memberships.map((membership) => {
-    const user = users.find((u) => u.id === membership.userId);
-
-    return {
-      ...user,
-      role: membership.role,
-      joinedAt: membership.joinedAt,
-    };
-  });
-
-  return members;
-}
-
-async function getGroupDetails({ groupId }) {
-  const { Group } = db.orm.public;
-  const group = await Group.where((gm) => gm.id.eq(groupId)).first();
+  // 1. Check whether group exists
+  const group = await Group.where((g) => g.id.eq(groupId)).first();
 
   if (!group) {
     throw new AppError("Group does not exist.", 404);
   }
+
+  // 2. Check requesting user's membership
+  const currentMembership = await GroupMember.where((gm) =>
+    and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
+  ).first();
+
+  if (!currentMembership) {
+    throw new AppError("You are not a member of this group.", 403);
+  }
+
+  // 3. Fetch all group memberships
+  const memberships = await GroupMember.where((gm) =>
+    gm.groupId.eq(groupId),
+  ).all();
+
+  const userIds = memberships.map((m) => m.userId);
+
+  // 4. Fetch corresponding users
+  const users = await User.where((u) => u.id.in(userIds)).all();
+
+  // 5. Combine user and membership information
+  return memberships.map((membership) => {
+    const user = users.find((u) => u.id === membership.userId);
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: membership.role,
+      joinedAt: membership.joinedAt,
+    };
+  });
+}
+
+async function getGroupDetails({ groupId, userId }) {
+  const { Group, GroupMember } = db.orm.public;
+
+  const group = await Group.where((g) => g.id.eq(groupId)).first();
+
+  if (!group) {
+    throw new AppError("Group does not exist.", 404);
+  }
+
+  const membership = await GroupMember.where((gm) =>
+    and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
+  ).first();
+
+  if (!membership) {
+    throw new AppError("You are not a member of this group.", 403);
+  }
+
   return group;
 }
 
 async function updateGroup({ groupId, userId, name }) {
-  const { GroupMember } = db.orm.public;
+  const { GroupMember,Group } = db.orm.public;
   const user = await GroupMember.where((gm) =>
     and(gm.userId.eq(userId), gm.groupId.eq(groupId)),
   ).first();

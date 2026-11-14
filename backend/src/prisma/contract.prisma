@@ -52,6 +52,7 @@ model GroupMember{
   user User @relation (fields:[userId], references:[id])
   
   @@id([groupId,userId])
+  @@index([userId])
   @@map("group_members")
 }
 
@@ -72,7 +73,10 @@ model Expense{
 
   group Group @relation(fields:[groupId],references:[id])
   payer User @relation(fields:[paidBy],references:[id])
+
   splits ExpenseSplit[]
+  @@index([groupId])
+  @@index([paidBy])
   @@map("expenses")
 }
 
@@ -90,10 +94,9 @@ model ExpenseSplit{
    user User @relation(fields: [userId],references:[id])
   
    @@id([expenseId,userId])
+   @@index([userId])
    @@map("expense_splits")
 }
-
-
 
 
 

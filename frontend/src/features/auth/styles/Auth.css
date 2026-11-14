@@ -319,6 +319,16 @@ body {
   display: none;
 }
 
+.form-success {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid rgba(145, 230, 189, 0.35);
+  border-radius: 10px;
+  background: rgba(145, 230, 189, 0.12);
+  color: var(--auth-mint);
+  font-size: 13px;
+}
+
 /* LOGIN OPTIONS */
 
 .login-options {

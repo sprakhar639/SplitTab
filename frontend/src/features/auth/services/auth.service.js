@@ -1,50 +1,19 @@
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:3000"
-).replace(/\/$/, "");
-
-async function apiRequest(endpoint, options = {}) {
-  const response = await fetch(`${API_URL}/api/auth${endpoint}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-  const responseText = await response.text();
-
-  let data;
-
-  try {
-    data = responseText ? JSON.parse(responseText) : {};
-  } catch {
-    throw new Error("Invalid response received from server");
-  }
-
-  if (!response.ok) {
-    throw new Error(data.message || "Something went wrong");
-  }
-
-  return data;
-}
+import api from "../../../services/api";
 
 export function registerUser(userData) {
-  return apiRequest("/register", {
-    method: "POST",
-    body: JSON.stringify(userData),
-  });
+  return api.post("/auth/register", userData);
 }
 
 export function loginUser(credentials) {
-  return apiRequest("/login", {
-    method: "POST",
-    body: JSON.stringify(credentials),
-  });
+  return api.post("/auth/login", credentials);
 }
 
 export function logoutUser() {
-  return apiRequest("/logout", {
-    method: "POST",
-  });
+  return api.post("/auth/logout");
+}
+
+// Returns { id, name, username, email } for the session cookie's user.
+export async function fetchCurrentUser() {
+  const { user } = await api.get("/auth/me");
+  return user;
 }

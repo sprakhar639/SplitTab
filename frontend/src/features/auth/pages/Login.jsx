@@ -1,22 +1,24 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../../context/AuthContext";
 import AuthVisual from "../components/AuthVisual";
 import "../styles/Auth.css";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: "",
+    identifier: "",
     password: "",
   });
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -34,12 +36,9 @@ export default function Login() {
 
   function validate() {
     const newErrors = {};
-    const email = formData.email.trim();
 
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else if (!EMAIL_REGEX.test(email)) {
-      newErrors.email = "Enter a valid email address";
+    if (!formData.identifier.trim()) {
+      newErrors.identifier = "Email or username is required";
     }
 
     if (!formData.password) {
@@ -49,7 +48,7 @@ export default function Login() {
     return newErrors;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const validationErrors = validate();
@@ -57,8 +56,17 @@ export default function Login() {
 
     if (Object.keys(validationErrors).length > 0) return;
 
-    // Temporary navigation until backend authentication is connected.
-    navigate("/dashboard");
+    setSubmitting(true);
+    try {
+      await login({
+        identifier: formData.identifier.trim(),
+        password: formData.password,
+      });
+      navigate(location.state?.from ?? "/dashboard", { replace: true });
+    } catch (error) {
+      setErrors({ form: error.message });
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -75,23 +83,29 @@ export default function Login() {
             <p>Continue managing your shared expenses.</p>
           </div>
 
+          {location.state?.message && (
+            <p className="form-success" role="status">
+              {location.state.message}
+            </p>
+          )}
+
           <form onSubmit={handleSubmit} noValidate>
             <div className="auth-field">
-              <label htmlFor="email">Email address</label>
+              <label htmlFor="identifier">Email or username</label>
 
               <input
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
+                id="identifier"
+                type="text"
+                name="identifier"
+                value={formData.identifier}
                 onChange={handleChange}
                 placeholder="you@gmail.com"
-                autoComplete="email"
-                className={errors.email ? "input-error" : ""}
+                autoComplete="username"
+                className={errors.identifier ? "input-error" : ""}
               />
 
-              {errors.email && (
-                <span className="field-error">{errors.email}</span>
+              {errors.identifier && (
+                <span className="field-error">{errors.identifier}</span>
               )}
             </div>
 
@@ -137,8 +151,10 @@ export default function Login() {
               <Link to="/forgot-password">Forgot password?</Link>
             </div>
 
-            <button type="submit" className="auth-submit">
-              Login <span>→</span>
+            {errors.form && <span className="field-error">{errors.form}</span>}
+
+            <button type="submit" className="auth-submit" disabled={submitting}>
+              {submitting ? "Logging in…" : <>Login <span>→</span></>}
             </button>
           </form>
 

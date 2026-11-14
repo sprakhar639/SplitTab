@@ -21,8 +21,10 @@ export default function AddExpense() {
   }
 
   async function handleSubmit(payload) {
-    await createExpense(groupId, payload);
-    navigate(`/groups/${groupId}`);
+    const expense = await createExpense(groupId, payload);
+    navigate(`/groups/${groupId}`, {
+      state: { message: `Expense “${expense.description || "Expense"}” saved` },
+    });
   }
 
   return (

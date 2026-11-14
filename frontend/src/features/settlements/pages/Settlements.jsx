@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import Avatar from "../../../shared/components/Avatar";
+import FeatureGate from "../../../shared/components/FeatureGate";
 import Button from "../../../shared/components/Button";
 import Input from "../../../shared/components/Input";
 import Loader from "../../../shared/components/Loader";
@@ -14,21 +15,63 @@ import GroupHeader from "../../groups/components/GroupHeader";
 import useGroup from "../../groups/hooks/useGroup";
 import { getSettlements, recordPayment } from "../settlement.service";
 
+// Re-fetches whenever refreshKey changes (after a payment is recorded).
+function PaymentHistory({ groupId, members, myId, refreshKey }) {
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    getSettlements(groupId).then(setHistory);
+  }, [groupId, refreshKey]);
+
+  return (
+    <div className="rounded-xl border border-line bg-white">
+      <h2 className="border-b border-line px-4 py-3 text-sm font-extrabold">
+        Payment history
+      </h2>
+
+      {history.length === 0 ? (
+        <p className="px-4 py-6 text-sm text-mute">No payments recorded yet.</p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {history.map((settlement) => {
+            const from = memberName(members, settlement.fromUserId, myId);
+            const to = memberName(members, settlement.toUserId, myId);
+            return (
+              <li key={settlement.id} className="flex items-center gap-3 px-4 py-3">
+                <Avatar name={to} id={settlement.toUserId} />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">
+                    {from} paid {to === "You" ? "you" : to}
+                  </p>
+                  <p className="text-xs text-mute">{formatDate(settlement.createdAt)}</p>
+                </div>
+                <span className="text-sm font-bold tabular-nums">
+                  {formatCurrency(settlement.amount)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <p className="border-t border-line px-4 py-2 text-xs text-mute">
+        History is kept in this browser until the backend can list settlements.
+      </p>
+    </div>
+  );
+}
+
 export default function Settlements() {
   const { groupId } = useParams();
   const { group, members, myId, isAdmin, loading, error, setGroup } = useGroup(groupId);
   const { balance, error: balanceError, reload: reloadBalance } = useMyBalance(groupId, myId);
 
-  const [history, setHistory] = useState([]);
+  const [historyKey, setHistoryKey] = useState(0);
   const [toUserId, setToUserId] = useState("");
   const [amount, setAmount] = useState("");
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
-
-  useEffect(() => {
-    getSettlements(groupId).then(setHistory);
-  }, [groupId]);
 
   if (loading) return <Loader label="Loading group…" />;
 
@@ -63,7 +106,7 @@ export default function Settlements() {
       setNotice(`Payment of ${formatCurrency(amountInPaise)} to ${name} recorded`);
       setAmount("");
       setToUserId("");
-      setHistory(await getSettlements(groupId));
+      setHistoryKey((key) => key + 1);
       await reloadBalance();
     } catch (err) {
       setErrors({ form: err.message });
@@ -156,40 +199,9 @@ export default function Settlements() {
             </Button>
           </form>
 
-          <div className="rounded-xl border border-line bg-white">
-            <h2 className="border-b border-line px-4 py-3 text-sm font-extrabold">
-              Payment history
-            </h2>
-
-            {history.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-mute">No payments recorded yet.</p>
-            ) : (
-              <ul className="divide-y divide-line">
-                {history.map((settlement) => {
-                  const from = memberName(members, settlement.fromUserId, myId);
-                  const to = memberName(members, settlement.toUserId, myId);
-                  return (
-                    <li key={settlement.id} className="flex items-center gap-3 px-4 py-3">
-                      <Avatar name={to} id={settlement.toUserId} />
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold">
-                          {from} paid {to === "You" ? "you" : to}
-                        </p>
-                        <p className="text-xs text-mute">{formatDate(settlement.createdAt)}</p>
-                      </div>
-                      <span className="text-sm font-bold tabular-nums">
-                        {formatCurrency(settlement.amount)}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-
-            <p className="border-t border-line px-4 py-2 text-xs text-mute">
-              History is kept in this browser until the backend can list settlements.
-            </p>
-          </div>
+          <FeatureGate feature="paymentHistory">
+            <PaymentHistory groupId={groupId} members={members} myId={myId} refreshKey={historyKey} />
+          </FeatureGate>
         </div>
 
         <BalanceCard

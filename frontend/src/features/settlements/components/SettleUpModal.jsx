@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { usePreview } from "../../../context/PreviewContext";
 import Button from "../../../shared/components/Button";
 import Input from "../../../shared/components/Input";
 import Modal from "../../../shared/components/Modal";
@@ -8,6 +9,7 @@ import { recordPayment } from "../settlement.service";
 
 // Settlements are stored per group, so the payment is recorded against one group.
 export default function SettleUpModal({ person, onClose, onRecorded }) {
+  const isPreview = usePreview();
   const owing = person.groups.filter(({ amount }) => amount < 0);
 
   const [groupId, setGroupId] = useState(owing[0]?.group.id ?? null);
@@ -84,11 +86,17 @@ export default function SettleUpModal({ person, onClose, onRecorded }) {
           error={error}
         />
 
+        {isPreview && (
+          <p className="text-xs font-semibold text-amber-800">
+            Payments can't be recorded in a preview, because the amounts are sample data.
+          </p>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" loading={saving}>
+          <Button type="submit" loading={saving} disabled={isPreview}>
             Record payment
           </Button>
         </div>

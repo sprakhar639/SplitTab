@@ -1,6 +1,9 @@
 import { Router } from "express";
 
-import { createExpenseWithSplitsController } from "./expense.controller.js";
+import {
+  createExpenseWithSplitsController,
+  getGroupExpensesController,
+} from "./expense.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
 import groupMiddleware from "../../middleware/groupMember.middleware.js";
@@ -12,7 +15,14 @@ route.post(
   "/:groupId/expenses",
   authMiddleware,
   groupMiddleware,
-  createExpenseWithSplitsController
+  createExpenseWithSplitsController,
+);
+
+route.get(
+  "/:groupId/expenses",
+  authMiddleware,
+  groupMiddleware,
+  getGroupExpensesController,
 );
 
 export default route;

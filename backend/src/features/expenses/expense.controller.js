@@ -1,6 +1,7 @@
 import {
   createExpenseWithSplits,
   equalSplit,
+  getGroupExpenses,
 } from "./expense.service.js";
 
 import AppError from "../../utils/AppError.js";
@@ -71,4 +72,19 @@ async function createExpenseWithSplitsController(req, res, next) {
   }
 }
 
-export { createExpenseWithSplitsController };
+async function getGroupExpensesController(req, res, next) {
+  try {
+    const groupId = Number(req.params.groupId);
+
+    const expenses = await getGroupExpenses(groupId);
+
+    return res.status(200).json({
+      message: "Expenses fetched successfully",
+      expenses,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export { createExpenseWithSplitsController, getGroupExpensesController };

@@ -1,5 +1,5 @@
 import db from "../../prisma/db.ts";
-const { Expense, ExpenseSplit } = db.orm.public;
+const { Expense, ExpenseSplit, User} = db.orm.public;
 import AppError from "../../utils/AppError.js";
 import { and } from "@prisma/orm-postgres/orm-client";
 
@@ -159,4 +159,25 @@ function equalSplit({ amount, participants }) {
   }));
 }
 
-export { equalSplit, createExpenseWithSplits };
+async function getGroupExpenses(groupId) {
+  if (!Number.isSafeInteger(groupId) || groupId <= 0) {
+    throw new AppError("Invalid group ID", 400);
+  }
+
+  const expenses = await Expense.where((e) =>
+    e.groupId.eq(groupId)
+  ).all();
+
+  if (expenses.length === 0) {
+    return [];
+  }
+
+  const expenseIds = expenses.map((expense) => expense.id);
+
+  const splits = await ExpenseSplit.where((s) =>
+    s.expenseId.in(expenseIds)
+  ).all();
+
+  return expenses;
+}
+export { equalSplit, createExpenseWithSplits, getGroupExpenses };

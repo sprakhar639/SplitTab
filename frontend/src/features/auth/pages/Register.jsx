@@ -2,21 +2,27 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import AuthVisual from "../components/AuthVisual";
+import { registerUser } from "../services/auth.service";
 import "../styles/Auth.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 export default function Register() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
 
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -32,18 +38,28 @@ export default function Register() {
       ...prev,
       [name]: "",
     }));
+
+    setServerError("");
   }
 
   function validate() {
     const newErrors = {};
 
     const name = formData.name.trim();
+    const username = formData.username.trim();
     const email = formData.email.trim();
 
     if (!name) {
       newErrors.name = "Name is required";
     } else if (name.length < 2) {
       newErrors.name = "Name must contain at least 2 characters";
+    }
+
+    if (!username) {
+      newErrors.username = "Username is required";
+    } else if (!USERNAME_REGEX.test(username)) {
+      newErrors.username =
+        "Username must contain 3-20 letters, numbers or underscores";
     }
 
     if (!email) {
@@ -67,16 +83,37 @@ export default function Register() {
     return newErrors;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const validationErrors = validate();
     setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
-    // Temporary navigation until backend registration is connected.
-    navigate("/dashboard");
+    try {
+      setLoading(true);
+      setServerError("");
+
+      await registerUser({
+        name: formData.name.trim(),
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      });
+
+      navigate("/login", {
+        state: {
+          message: "Registration successful. Please log in.",
+        },
+      });
+    } catch (error) {
+      setServerError(error.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -94,6 +131,7 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
+            {/* Full Name */}
             <div className="auth-field">
               <label htmlFor="name">Full name</label>
 
@@ -113,6 +151,27 @@ export default function Register() {
               )}
             </div>
 
+            {/* Username */}
+            <div className="auth-field">
+              <label htmlFor="username">Username</label>
+
+              <input
+                id="username"
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Choose a username"
+                autoComplete="username"
+                className={errors.username ? "input-error" : ""}
+              />
+
+              {errors.username && (
+                <span className="field-error">{errors.username}</span>
+              )}
+            </div>
+
+            {/* Email */}
             <div className="auth-field">
               <label htmlFor="email">Email address</label>
 
@@ -132,6 +191,7 @@ export default function Register() {
               )}
             </div>
 
+            {/* Password */}
             <div className="auth-field">
               <label htmlFor="password">Password</label>
 
@@ -161,6 +221,7 @@ export default function Register() {
               )}
             </div>
 
+            {/* Confirm Password */}
             <div className="auth-field">
               <label htmlFor="confirmPassword">Confirm password</label>
 
@@ -196,8 +257,19 @@ export default function Register() {
               )}
             </div>
 
-            <button type="submit" className="auth-submit">
-              Create account <span>→</span>
+            {/* Backend Error */}
+            {serverError && (
+              <p className="field-error">{serverError}</p>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={loading}
+            >
+              {loading ? "Creating account..." : "Create account"}
+              {!loading && <span>→</span>}
             </button>
           </form>
 
@@ -208,9 +280,17 @@ export default function Register() {
           </div>
 
           <div className="social-buttons">
-            <button type="button" aria-label="Google signup">G</button>
-            <button type="button" aria-label="GitHub signup">GH</button>
-            <button type="button" aria-label="LinkedIn signup">in</button>
+            <button type="button" aria-label="Google signup">
+              G
+            </button>
+
+            <button type="button" aria-label="GitHub signup">
+              GH
+            </button>
+
+            <button type="button" aria-label="LinkedIn signup">
+              in
+            </button>
           </div>
 
           <div className="auth-footer">

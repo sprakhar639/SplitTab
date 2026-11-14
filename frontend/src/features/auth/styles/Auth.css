@@ -313,6 +313,11 @@ body {
 
   cursor: pointer;
 }
+/* Hide browser's built-in password reveal button */
+.password-wrapper input[type="password"]::-ms-reveal,
+.password-wrapper input[type="password"]::-ms-clear {
+  display: none;
+}
 
 /* LOGIN OPTIONS */
 
@@ -872,4 +877,15 @@ body {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Override browser autofill background */
+.auth-field input:-webkit-autofill,
+.auth-field input:-webkit-autofill:hover,
+.auth-field input:-webkit-autofill:focus,
+.auth-field input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #082f25 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 9999s ease-in-out 0s;
 }

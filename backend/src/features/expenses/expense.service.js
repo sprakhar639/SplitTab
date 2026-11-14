@@ -1,5 +1,5 @@
 import db from "../../prisma/db.ts";
-const { Expense, ExpenseSplit, User} = db.orm.public;
+const { Expense, ExpenseSplit, User } = db.orm.public;
 import AppError from "../../utils/AppError.js";
 import { and } from "@prisma/orm-postgres/orm-client";
 
@@ -164,9 +164,7 @@ async function getGroupExpenses(groupId) {
     throw new AppError("Invalid group ID", 400);
   }
 
-  const expenses = await Expense.where((e) =>
-    e.groupId.eq(groupId)
-  ).all();
+  const expenses = await Expense.where((e) => e.groupId.eq(groupId)).all();
 
   if (expenses.length === 0) {
     return [];
@@ -175,9 +173,44 @@ async function getGroupExpenses(groupId) {
   const expenseIds = expenses.map((expense) => expense.id);
 
   const splits = await ExpenseSplit.where((s) =>
-    s.expenseId.in(expenseIds)
+    s.expenseId.in(expenseIds),
   ).all();
 
-  return expenses;
+  const userIds = [
+    ...new Set([
+      ...expenses.map((expense) => expense.paidBy),
+      ...splits.map((split) => split.userId),
+    ]),
+  ];
+
+  const users = await User.where((u) => u.id.in(userIds)).all();
+  return expenses.map((expense) => {
+    const payer = users.find((user) => user.id === expense.paidBy);
+
+    const expenseSplits = splits
+      .filter((split) => split.expenseId === expense.id)
+      .map((split) => {
+        const user = users.find((user) => user.id === split.userId);
+
+        return {
+          userId: split.userId,
+          name: user?.name,
+          amount: split.amount,
+        };
+      });
+
+    return {
+      id: expense.id,
+      description: expense.description,
+      amount: expense.amount,
+      createdAt: expense.createdAt,
+      paidBy: {
+        id: expense.paidBy,
+        name: payer?.name,
+      },
+      splits: expenseSplits,
+    };
+  });
 }
+
 export { equalSplit, createExpenseWithSplits, getGroupExpenses };

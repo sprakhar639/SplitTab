@@ -1,13 +1,9 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-
 import db from "../../prisma/db.ts";
 import redis from "../../config/redis.js";
-
 import { or } from "@prisma/orm-postgres/orm-client";
-
 const { User } = db.orm.public;
-
 const SESSION_DURATION = 7 * 24 * 60 * 60;
 
 function createError(message, statusCode) {
@@ -18,10 +14,7 @@ function createError(message, statusCode) {
 
 // Generate SHA-256 hash of session token
 function hashSessionToken(sessionToken) {
-  return crypto
-    .createHash("sha256")
-    .update(sessionToken)
-    .digest("hex");
+  return crypto.createHash("sha256").update(sessionToken).digest("hex");
 }
 
 // REGISTER
@@ -45,7 +38,7 @@ async function register({ username, email, password, name }) {
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
     throw createError(
       "Username must contain 3-20 letters, numbers or underscores",
-      400
+      400,
     );
   }
 
@@ -56,25 +49,16 @@ async function register({ username, email, password, name }) {
 
   // Validate password
   if (typeof password !== "string" || password.length < 8) {
-    throw createError(
-      "Password must contain at least 8 characters",
-      400
-    );
+    throw createError("Password must contain at least 8 characters", 400);
   }
 
   // Check duplicate email or username
   const existingUser = await User.where((u) =>
-    or(
-      u.email.eq(email),
-      u.username.eq(username)
-    )
+    or(u.email.eq(email), u.username.eq(username)),
   ).first();
 
   if (existingUser) {
-    throw createError(
-      "Email or username already exists",
-      409
-    );
+    throw createError("Email or username already exists", 409);
   }
 
   // Hash password
@@ -97,20 +81,14 @@ async function register({ username, email, password, name }) {
 // LOGIN
 async function login({ identifier, password }) {
   if (!identifier || !password) {
-    throw createError(
-      "Email/username and password are required",
-      400
-    );
+    throw createError("Email/username and password are required", 400);
   }
 
   identifier = identifier.trim().toLowerCase();
 
   // Find user by email or username
   const user = await User.where((u) =>
-    or(
-      u.email.eq(identifier),
-      u.username.eq(identifier)
-    )
+    or(u.email.eq(identifier), u.username.eq(identifier)),
   ).first();
 
   if (!user) {
@@ -118,10 +96,7 @@ async function login({ identifier, password }) {
   }
 
   // Compare password
-  const passwordMatch = await bcrypt.compare(
-    password,
-    user.passwordHash
-  );
+  const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
   if (!passwordMatch) {
     throw createError("Invalid credentials", 401);
@@ -157,14 +132,33 @@ async function createSession(userId) {
     `session:${tokenHash}`,
     String(userId),
     "EX",
-    SESSION_DURATION
+    SESSION_DURATION,
   );
 
   return sessionToken;
 }
 
-export {
-  register,
-  login,
-  logout,
-};
+// GET CURRENT USER
+async function getCurrentUser(userId) {
+  // Validate user ID
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw createError("Invalid user ID", 400);
+  }
+
+  // Find user
+  const user = await User.where((u) => u.id.eq(userId)).first();
+
+  if (!user) {
+    throw createError("User not found", 404);
+  }
+
+  // Return only required information
+  return {
+    id: user.id,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+  };
+}
+
+export { register, login, logout, getCurrentUser };

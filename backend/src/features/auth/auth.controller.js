@@ -1,9 +1,8 @@
-import { register, login, logout } from "./auth.service.js";
-
+import { register, login, logout, getCurrentUser } from "./auth.service.js";
 
 async function userRegister(req, res, next) {
   try {
-    const  sessionToken = await register(req.body);
+    const sessionToken = await register(req.body);
 
     res.cookie("sessionId", sessionToken, {
       httpOnly: true,
@@ -19,7 +18,7 @@ async function userRegister(req, res, next) {
 
 async function userLogin(req, res, next) {
   try {
-    const  sessionToken  = await login(req.body);
+    const sessionToken = await login(req.body);
 
     res.cookie("sessionId", sessionToken, {
       httpOnly: true,
@@ -44,4 +43,19 @@ async function userLogout(req, res, next) {
   }
 }
 
-export { userRegister, userLogin, userLogout };
+async function currentUserController(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    const user = await getCurrentUser(userId);
+
+    return res.status(200).json({
+      message: "User fetched successfully",
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export { userRegister, userLogin, userLogout, currentUserController };

@@ -5,11 +5,18 @@ import * as authService from "../features/auth/services/auth.service";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => authService.getCurrentUser());
+  // undefined while the session is being checked, null when logged out.
+  const [user, setUser] = useState(undefined);
+
+  useEffect(() => {
+    authService
+      .fetchCurrentUser()
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, []);
 
   useEffect(() => {
     function handleUnauthorized() {
-      authService.clearCurrentUser();
       setUser(null);
     }
 
@@ -19,30 +26,25 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (credentials) => {
-    setUser(await authService.login(credentials));
-  }, []);
-
-  const register = useCallback(async (details) => {
-    setUser(await authService.register(details));
+    await authService.loginUser(credentials);
+    setUser(await authService.fetchCurrentUser());
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await authService.logout();
+      await authService.logoutUser();
     } finally {
       setUser(null);
     }
   }, []);
 
-  // Fills in id/name once a group member list tells us who we are.
+  // Applies local profile edits until the backend can save them.
   const updateUser = useCallback((changes) => {
-    setUser((prev) =>
-      prev ? authService.saveCurrentUser({ ...prev, ...changes }) : prev,
-    );
+    setUser((prev) => (prev ? { ...prev, ...changes } : prev));
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

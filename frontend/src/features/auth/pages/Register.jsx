@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../../context/AuthContext";
 import AuthVisual from "../components/AuthVisual";
+import { registerUser } from "../services/auth.service";
 import "../styles/Auth.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -10,7 +10,6 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -21,9 +20,11 @@ export default function Register() {
   });
 
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -37,12 +38,15 @@ export default function Register() {
       ...prev,
       [name]: "",
     }));
+
+    setServerError("");
   }
 
   function validate() {
     const newErrors = {};
 
     const name = formData.name.trim();
+    const username = formData.username.trim();
     const email = formData.email.trim();
 
     if (!name) {
@@ -51,10 +55,11 @@ export default function Register() {
       newErrors.name = "Name must contain at least 2 characters";
     }
 
-    if (!formData.username.trim()) {
+    if (!username) {
       newErrors.username = "Username is required";
-    } else if (!USERNAME_REGEX.test(formData.username.trim())) {
-      newErrors.username = "Use 3-20 letters, numbers or underscores";
+    } else if (!USERNAME_REGEX.test(username)) {
+      newErrors.username =
+        "Username must contain 3-20 letters, numbers or underscores";
     }
 
     if (!email) {
@@ -84,20 +89,30 @@ export default function Register() {
     const validationErrors = validate();
     setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
-    setSubmitting(true);
     try {
-      await register({
+      setLoading(true);
+      setServerError("");
+
+      await registerUser({
         name: formData.name.trim(),
         username: formData.username.trim(),
         email: formData.email.trim(),
         password: formData.password,
       });
-      navigate("/dashboard", { replace: true });
+
+      navigate("/login", {
+        state: {
+          message: "Registration successful. Please log in.",
+        },
+      });
     } catch (error) {
-      setErrors({ form: error.message });
-      setSubmitting(false);
+      setServerError(error.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -116,6 +131,7 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
+            {/* Full Name */}
             <div className="auth-field">
               <label htmlFor="name">Full name</label>
 
@@ -135,6 +151,7 @@ export default function Register() {
               )}
             </div>
 
+            {/* Username */}
             <div className="auth-field">
               <label htmlFor="username">Username</label>
 
@@ -144,7 +161,7 @@ export default function Register() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="Pick a username"
+                placeholder="Choose a username"
                 autoComplete="username"
                 className={errors.username ? "input-error" : ""}
               />
@@ -154,6 +171,7 @@ export default function Register() {
               )}
             </div>
 
+            {/* Email */}
             <div className="auth-field">
               <label htmlFor="email">Email address</label>
 
@@ -173,6 +191,7 @@ export default function Register() {
               )}
             </div>
 
+            {/* Password */}
             <div className="auth-field">
               <label htmlFor="password">Password</label>
 
@@ -202,6 +221,7 @@ export default function Register() {
               )}
             </div>
 
+            {/* Confirm Password */}
             <div className="auth-field">
               <label htmlFor="confirmPassword">Confirm password</label>
 
@@ -237,10 +257,19 @@ export default function Register() {
               )}
             </div>
 
-            {errors.form && <span className="field-error">{errors.form}</span>}
+            {/* Backend Error */}
+            {serverError && (
+              <p className="field-error">{serverError}</p>
+            )}
 
-            <button type="submit" className="auth-submit" disabled={submitting}>
-              {submitting ? "Creating account…" : <>Create account <span>→</span></>}
+            {/* Submit */}
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={loading}
+            >
+              {loading ? "Creating account..." : "Create account"}
+              {!loading && <span>→</span>}
             </button>
           </form>
 
@@ -251,9 +280,17 @@ export default function Register() {
           </div>
 
           <div className="social-buttons">
-            <button type="button" aria-label="Google signup">G</button>
-            <button type="button" aria-label="GitHub signup">GH</button>
-            <button type="button" aria-label="LinkedIn signup">in</button>
+            <button type="button" aria-label="Google signup">
+              G
+            </button>
+
+            <button type="button" aria-label="GitHub signup">
+              GH
+            </button>
+
+            <button type="button" aria-label="LinkedIn signup">
+              in
+            </button>
           </div>
 
           <div className="auth-footer">

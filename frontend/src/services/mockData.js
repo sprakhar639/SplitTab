@@ -1,6 +1,5 @@
 // Mock datasource for endpoints the backend doesn't expose yet:
 //
-//   GET /auth/me                    -> mockAuth
 //   GET /users/search?q=            -> mockUsers
 //   GET /expense/:groupId/expenses  -> mockExpenses
 //   GET /settlements/:groupId       -> mockSettlements
@@ -34,7 +33,6 @@ const SAMPLE_EXPENSES = [
 
 function emptyStore() {
   return {
-    me: null,
     users: SEED_USERS,
     expenses: {},
     settlements: {},
@@ -83,26 +81,6 @@ function sampleExpenses(groupId, members) {
     isSample: true,
   }));
 }
-
-export const mockAuth = {
-  // Synchronous so the app knows who is logged in on first render.
-  me() {
-    return read().me;
-  },
-
-  setMe(user) {
-    const store = read();
-    store.me = user;
-    write(store);
-    return user;
-  },
-
-  clear() {
-    const store = read();
-    store.me = null;
-    write(store);
-  },
-};
 
 export const mockUsers = {
   search(query, excludeIds = []) {
@@ -332,13 +310,12 @@ export const mockIntegrations = {
   },
 };
 
-// Profile edits. Details are saved into the mocked /auth/me record.
+// Profile edits. Rejects an email or username another known user already has.
 export const mockProfile = {
-  update(changes) {
-    const store = read();
-    const taken = store.users.find(
+  update(userId, changes) {
+    const taken = read().users.find(
       (user) =>
-        user.id !== store.me?.id &&
+        user.id !== userId &&
         ((changes.email && user.email === changes.email) ||
           (changes.username && user.username === changes.username)),
     );
@@ -348,10 +325,7 @@ export const mockProfile = {
       return Promise.reject(new Error(`That ${field} is already used by another account`));
     }
 
-    store.me = { ...store.me, ...changes };
-    write(store);
-
-    return respond(store.me);
+    return respond(changes);
   },
 
   // The real endpoint checks the current password with bcrypt.

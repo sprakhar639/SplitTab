@@ -1,8 +1,8 @@
 import { mockProfile } from "../../services/mockData";
 
 // Mock for PATCH /users/me
-export function updateProfile(changes) {
-  return mockProfile.update(changes);
+export function updateProfile(userId, changes) {
+  return mockProfile.update(userId, changes);
 }
 
 // Mock for PATCH /users/me/password

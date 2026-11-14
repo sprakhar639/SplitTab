@@ -83,6 +83,12 @@ export default function Login() {
             <p>Continue managing your shared expenses.</p>
           </div>
 
+          {location.state?.message && (
+            <p className="form-success" role="status">
+              {location.state.message}
+            </p>
+          )}
+
           <form onSubmit={handleSubmit} noValidate>
             <div className="auth-field">
               <label htmlFor="identifier">Email or username</label>

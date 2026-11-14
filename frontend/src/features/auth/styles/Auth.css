@@ -313,6 +313,21 @@ body {
 
   cursor: pointer;
 }
+/* Hide browser's built-in password reveal button */
+.password-wrapper input[type="password"]::-ms-reveal,
+.password-wrapper input[type="password"]::-ms-clear {
+  display: none;
+}
+
+.form-success {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid rgba(145, 230, 189, 0.35);
+  border-radius: 10px;
+  background: rgba(145, 230, 189, 0.12);
+  color: var(--auth-mint);
+  font-size: 13px;
+}
 
 /* LOGIN OPTIONS */
 
@@ -872,4 +887,15 @@ body {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Override browser autofill background */
+.auth-field input:-webkit-autofill,
+.auth-field input:-webkit-autofill:hover,
+.auth-field input:-webkit-autofill:focus,
+.auth-field input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #082f25 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 9999s ease-in-out 0s;
 }

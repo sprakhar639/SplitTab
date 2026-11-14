@@ -3,9 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { getGroup, getMembers } from "../group.service";
 
-// Loads a group with its members, and works out which member is me.
+// Loads a group with its members, and my membership in it.
 export default function useGroup(groupId) {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const [state, setState] = useState({
     group: null,
     members: [],
@@ -30,17 +30,7 @@ export default function useGroup(groupId) {
     reload();
   }, [reload]);
 
-  const me = state.members.find((member) =>
-    user?.id
-      ? member.id === user.id
-      : Boolean(user?.email) && member.email === user.email,
-  );
-
-  useEffect(() => {
-    if (me && (me.id !== user?.id || me.name !== user?.name)) {
-      updateUser({ id: me.id, name: me.name, email: me.email });
-    }
-  }, [me, user?.id, user?.name, updateUser]);
+  const me = state.members.find((member) => member.id === user?.id);
 
   const setGroup = useCallback((changes) => {
     setState((prev) => ({ ...prev, group: { ...prev.group, ...changes } }));

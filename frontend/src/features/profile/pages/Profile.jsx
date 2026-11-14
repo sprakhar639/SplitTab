@@ -66,7 +66,7 @@ function DetailsForm({ user, onSaved }) {
 
     setSaving(true);
     try {
-      await updateProfile(changes);
+      await updateProfile(user.id, changes);
       onSaved(changes);
       setNotice("Profile updated");
     } catch (err) {
@@ -229,8 +229,8 @@ export default function Profile() {
       </div>
 
       <p className="text-xs text-mute">
-        Profile changes are mocked and only saved in this browser until the
-        backend has endpoints to update your account.
+        Profile changes are mocked: they show straight away but are lost when
+        you reload, until the backend has endpoints to update your account.
       </p>
     </div>
   );

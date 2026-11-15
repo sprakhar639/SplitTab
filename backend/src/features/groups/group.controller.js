@@ -6,6 +6,7 @@ import {
   groupsUserBelongTo,
   allGroupMembers,
   getGroupDetails,
+  searchGroupUsers,
   updateGroup,
   deleteGroup,
 } from "./group.service.js";
@@ -91,7 +92,7 @@ async function allGroupMembersController(req, res, next) {
 
     const members = await allGroupMembers({
       groupId: Number(groupId),
-       userId: req.user.id,
+      userId: req.user.id,
     });
 
     return res.status(200).json({
@@ -116,6 +117,25 @@ async function getGroupDetailsController(req, res, next) {
     return res.status(200).json({
       success: true,
       group,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function searchGroupUsersController(req, res, next) {
+  try {
+    const groupId = Number(req.params.groupId);
+
+    const users = await searchGroupUsers({
+      groupId,
+      requesterId: req.user.id,
+      query: req.query.q,
+    });
+
+    return res.status(200).json({
+      message: "Users fetched successfully",
+      users,
     });
   } catch (error) {
     next(error);
@@ -169,6 +189,7 @@ export {
   groupsUserBelongToController,
   allGroupMembersController,
   getGroupDetailsController,
+  searchGroupUsersController,
   updateGroupController,
   deleteGroupController,
 };

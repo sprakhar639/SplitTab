@@ -10,6 +10,7 @@ import {
   getGroupDetailsController,
   updateGroupController,
   deleteGroupController,
+  searchGroupUsersController,
 } from "./group.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
@@ -23,13 +24,24 @@ router.post("/", authMiddleware, createGroupController);
 router.get("/created", authMiddleware, groupsCreatedByUserController);
 router.get("/belongTo", authMiddleware, groupsUserBelongToController);
 
+// Search users
+router.get(
+  "/:groupId/users/search",
+  authMiddleware,
+  searchGroupUsersController,
+);
+
 // Group details
 router.get("/:groupId", authMiddleware, getGroupDetailsController);
 
 // Group members
 router.get("/:groupId/members", authMiddleware, allGroupMembersController);
 router.post("/:groupId/members", authMiddleware, addMemberController);
-router.delete("/:groupId/members/:userId", authMiddleware, removeMemberController);
+router.delete(
+  "/:groupId/members/:userId",
+  authMiddleware,
+  removeMemberController,
+);
 
 // Update group
 router.patch("/:groupId", authMiddleware, updateGroupController);

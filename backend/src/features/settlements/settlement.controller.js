@@ -2,27 +2,38 @@ import {
   createSettlementService,
   getBalanceService,
 } from "./settlement.service.js";
+import AppError from "../../utils/AppError.js";
 
-async function createSettlement(req, res,next) {
+async function createSettlement(req, res, next) {
   try {
     const groupId = Number(req.params.groupId);
     const fromUserId = Number(req.user.id);
     const { toUserId, amount } = req.body;
 
- 
+    const amountInRupees = Number(amount);
+
+    if (
+      !Number.isFinite(amountInRupees) ||
+      amountInRupees <= 0
+    ) {
+      throw new AppError("Invalid settlement amount", 400);
+    }
+
+    const amountInPaise = Math.round(amountInRupees * 100);
+
     const settlement = await createSettlementService({
       groupId,
       fromUserId,
       toUserId: Number(toUserId),
-      amount: Number(amount),
+      amount: amountInPaise,
     });
 
     return res.status(201).json({
-      message: "Settlement created Successfully",
+      message: "Settlement created successfully",
       settlement,
     });
   } catch (error) {
-   next(error)
+    next(error);
   }
 }
 

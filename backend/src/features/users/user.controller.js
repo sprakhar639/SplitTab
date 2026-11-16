@@ -1,4 +1,4 @@
-import { searchGroupUsers } from "../groups/group.service";
+import { searchGroupUsers } from "./user.services.js";
 
 async function searchGroupUsersController(req, res, next) {
   try {

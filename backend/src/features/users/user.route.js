@@ -1,13 +1,13 @@
 import { Router } from "express";
-import authMiddleware from "../../middleware/auth.middleware";
-import searchGroupUsersController from "./user.controller";
+import authMiddleware from "../../middleware/auth.middleware.js";
+import searchGroupUsersController from "./user.controller.js";
 
 const router = Router();
-// Search users
+
 router.get(
-  "/:groupId/users/search",
+  "/groups/:groupId/search",
   authMiddleware,
   searchGroupUsersController,
 );
 
-export default route;
+export default router;

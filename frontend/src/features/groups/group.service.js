@@ -1,5 +1,5 @@
 import api from "../../services/api";
-import { mockInvites, mockUsers } from "../../services/mockData";
+import { mockInvites } from "../../services/mockData";
 
 // /groups/belongTo and /groups/created still return soft-deleted groups.
 const active = (groups) => groups.filter((group) => !group.isDeleted);
@@ -34,7 +34,6 @@ export async function deleteGroup(groupId) {
 
 export async function getMembers(groupId) {
   const { members } = await api.get(`/groups/${groupId}/members`);
-  mockUsers.remember(members);
   return members;
 }
 
@@ -48,8 +47,14 @@ export async function removeMember(groupId, userId) {
 }
 
 // Mock for GET /users/search?q=
-export function searchUsers(query, excludeIds) {
-  return mockUsers.search(query, excludeIds);
+export async function searchUsers(groupId, query) {
+  const params = new URLSearchParams({ q: query });
+
+  const { users } = await api.get(
+    `/users/groups/${groupId}/search?${params.toString()}`
+  );
+
+  return users;
 }
 
 // Mock for GET /groups/:groupId/invites

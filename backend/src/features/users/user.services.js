@@ -1,6 +1,6 @@
 import db from "../../prisma/db.ts";
-import AppError from "../../utils/AppError";
-
+import AppError from "../../utils/AppError.js";
+import { and, or } from "@prisma/orm-postgres/orm-client";
 
 async function searchGroupUsers({ groupId, requesterId, query }) {
   const { Group, GroupMember, User } = db.orm.public;
@@ -11,15 +11,15 @@ async function searchGroupUsers({ groupId, requesterId, query }) {
   }
 
   // 2. Validate search query
-  if (typeof query !== "string" || query.trim().length < 2) {
-    throw new AppError("Search query must contain at least 2 characters", 400);
+  if (typeof query !== "string" || query.trim().length < 1) {
+    throw new AppError("Search query must contain at least 1 character", 400);
   }
 
   const searchQuery = query.trim();
 
   // 3. Check whether group exists and is active
   const group = await Group.where((g) =>
-    and(g.id.eq(groupId), g.isDeleted.eq(false)),
+    and(g.id.eq(groupId), g.isDeleted.eq(false))
   ).first();
 
   if (!group) {
@@ -28,7 +28,7 @@ async function searchGroupUsers({ groupId, requesterId, query }) {
 
   // 4. Verify requester is a group member
   const requester = await GroupMember.where((gm) =>
-    and(gm.groupId.eq(groupId), gm.userId.eq(requesterId)),
+    and(gm.groupId.eq(groupId), gm.userId.eq(requesterId))
   ).first();
 
   if (!requester) {
@@ -37,18 +37,22 @@ async function searchGroupUsers({ groupId, requesterId, query }) {
 
   // 5. Fetch existing group members
   const memberships = await GroupMember.where((gm) =>
-    gm.groupId.eq(groupId),
+    gm.groupId.eq(groupId)
   ).all();
 
-  const existingUserIds = new Set(memberships.map((member) => member.userId));
+  const existingUserIds = new Set(
+    memberships.map((member) => member.userId)
+  );
 
-  // 6. Search users
+  // 6. Search users using partial matching
+  const searchPattern = `%${searchQuery}%`;
+
   const users = await User.where((u) =>
     or(
-      u.name.eq(searchQuery),
-      u.username.eq(searchQuery),
-      u.email.eq(searchQuery.toLowerCase()),
-    ),
+      u.name.ilike(searchPattern),
+      u.username.ilike(searchPattern),
+      u.email.ilike(searchPattern)
+    )
   ).all();
 
   // 7. Exclude existing members and limit results
@@ -63,4 +67,4 @@ async function searchGroupUsers({ groupId, requesterId, query }) {
     }));
 }
 
-export default searchGroupUsers
+export { searchGroupUsers };

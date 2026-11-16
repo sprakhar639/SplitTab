@@ -6,6 +6,6 @@ import groupMiddleware from "../../middleware/groupMember.middleware.js";
 const route = Router();
 
 route.post("/groups/:groupId", authMiddleware,groupMiddleware,createSettlement);
-route.get("/balance/:groupId/:userId", authMiddleware,groupMiddleware, getBalanceController);
+route.get("/balance/:groupId", authMiddleware, groupMiddleware, getBalanceController);
 
 export default route;

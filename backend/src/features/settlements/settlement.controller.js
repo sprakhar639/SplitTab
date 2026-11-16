@@ -37,16 +37,19 @@ async function createSettlement(req, res, next) {
   }
 }
 
-async function getBalanceController(req, res,next) {
-  const { groupId, userId } = req.params;
+async function getBalanceController(req, res, next) {
   try {
+    const groupId = Number(req.params.groupId);
+    const userId = req.user.id;
+
     const balance = await getBalanceService({
-      groupId: Number(groupId),
-      userId: Number(userId),
+      groupId,
+      userId,
     });
+
     return res.status(200).json(balance);
   } catch (error) {
-   next(error)
+    next(error);
   }
 }
 

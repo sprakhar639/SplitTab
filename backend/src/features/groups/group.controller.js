@@ -6,7 +6,6 @@ import {
   groupsUserBelongTo,
   allGroupMembers,
   getGroupDetails,
-  searchGroupUsers,
   updateGroup,
   deleteGroup,
 } from "./group.service.js";
@@ -123,25 +122,6 @@ async function getGroupDetailsController(req, res, next) {
   }
 }
 
-async function searchGroupUsersController(req, res, next) {
-  try {
-    const groupId = Number(req.params.groupId);
-
-    const users = await searchGroupUsers({
-      groupId,
-      requesterId: req.user.id,
-      query: req.query.q,
-    });
-
-    return res.status(200).json({
-      message: "Users fetched successfully",
-      users,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
 async function updateGroupController(req, res, next) {
   try {
     const { groupId } = req.params;
@@ -189,7 +169,6 @@ export {
   groupsUserBelongToController,
   allGroupMembersController,
   getGroupDetailsController,
-  searchGroupUsersController,
   updateGroupController,
   deleteGroupController,
 };

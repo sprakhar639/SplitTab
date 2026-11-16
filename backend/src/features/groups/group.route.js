@@ -10,7 +10,6 @@ import {
   getGroupDetailsController,
   updateGroupController,
   deleteGroupController,
-  searchGroupUsersController,
 } from "./group.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
@@ -23,13 +22,6 @@ router.post("/", authMiddleware, createGroupController);
 // Fetch groups
 router.get("/created", authMiddleware, groupsCreatedByUserController);
 router.get("/belongTo", authMiddleware, groupsUserBelongToController);
-
-// Search users
-router.get(
-  "/:groupId/users/search",
-  authMiddleware,
-  searchGroupUsersController,
-);
 
 // Group details
 router.get("/:groupId", authMiddleware, getGroupDetailsController);

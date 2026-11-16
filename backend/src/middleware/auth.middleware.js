@@ -29,8 +29,6 @@ async function authMiddleware(req, res, next) {
     }
 
     req.user = { id: userId };
-    console.log("User ID:", req.user.id);
-    console.log("User ID type:", typeof req.user.id);
     next();
   } catch (error) {
     next(error);

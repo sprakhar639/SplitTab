@@ -13,6 +13,12 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
+// Disable caching for all API responses
+app.use("/api", (req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
 app.use("/api/auth", authRoute);
 app.use("/api/groups", groupRoute);
 app.use("/api/expense", expenseRoute);

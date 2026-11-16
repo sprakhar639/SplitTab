@@ -35,45 +35,68 @@ async function createSettlementService({
 }
 
 async function getBalanceService({ groupId, userId }) {
-  const membership = await db.orm.public.GroupMember.where((gm) =>
+  const { GroupMember, Expense, ExpenseSplit, Settlement } = db.orm.public;
+
+  // 1. Verify group membership
+  const membership = await GroupMember.where((gm) =>
     and(gm.groupId.eq(groupId), gm.userId.eq(userId)),
   ).first();
 
   if (!membership) {
     throw new AppError("Not a member of this group", 403);
   }
-  const expenses = await db.orm.public.Expense.where((e) =>
-    e.groupId.eq(groupId),
-  ).all();
 
-  let owed = 0;
+  // 2. Fetch all group expenses
+  const expenses = await Expense.where((e) => e.groupId.eq(groupId)).all();
 
-  for (const expense of expenses) {
-    const split = await db.orm.public.ExpenseSplit.where((s) =>
-      and(s.expenseId.eq(expense.id), s.userId.eq(userId)),
-    ).first();
+  // 3. Calculate total amount paid by the user
+  const totalPaid = expenses
+    .filter((expense) => expense.paidBy === userId)
+    .reduce((sum, expense) => sum + expense.amount, 0);
 
-    if (split) {
-      owed += split.amount;
-    }
-  }
+  // 4. Fetch expense splits belonging to the user
+  const expenseIds = expenses.map((expense) => expense.id);
 
-  const settlements = await db.orm.public.Settlement.where((s) =>
+  const splits = expenseIds.length
+    ? await ExpenseSplit.where((s) =>
+        and(s.expenseId.in(expenseIds), s.userId.eq(userId)),
+      ).all()
+    : [];
+
+  // 5. Calculate user's total expense share
+  const totalShare = splits.reduce((sum, split) => sum + split.amount, 0);
+
+  // 6. Fetch settlements sent by the user
+  const sentSettlements = await Settlement.where((s) =>
     and(s.groupId.eq(groupId), s.fromUserId.eq(userId)),
   ).all();
 
-  let paid = 0;
+  const settlementsSent = sentSettlements.reduce(
+    (sum, settlement) => sum + settlement.amount,
+    0,
+  );
 
-  for (const settlement of settlements) {
-    paid += settlement.amount;
-  }
+  // 7. Fetch settlements received by the user
+  const receivedSettlements = await Settlement.where((s) =>
+    and(s.groupId.eq(groupId), s.toUserId.eq(userId)),
+  ).all();
 
-  const remaining = owed - paid;
+  const settlementsReceived = receivedSettlements.reduce(
+    (sum, settlement) => sum + settlement.amount,
+    0,
+  );
+
+  // 8. Calculate final balance
+  const balance =
+    totalPaid - totalShare + settlementsSent - settlementsReceived;
+
   return {
-    owed,
-    paid,
-    remaining,
-    settled: remaining <= 0,
+    totalPaid,
+    totalShare,
+    settlementsSent,
+    settlementsReceived,
+    balance,
+    status: balance > 0 ? "RECEIVABLE" : balance < 0 ? "PAYABLE" : "SETTLED",
   };
 }
 
@@ -90,4 +113,4 @@ async function getGroupSettlement({ groupId }) {
     console.log(splits);
   }
 }
-export { createSettlementService, getBalanceService };
+export { createSettlementService, getBalanceService, getGroupSettlement };

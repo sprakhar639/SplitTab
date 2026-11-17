@@ -12,7 +12,7 @@ const MOCKS_ENABLED = import.meta.env.VITE_ENABLE_MOCKS === "true";
 
 export const FEATURES = {
   expenseHistory: {
-    ready: false,
+    ready: true,
     title: "Expense history",
     description: "Browse every expense in your groups, with filters, grouping and details.",
     highlights: [

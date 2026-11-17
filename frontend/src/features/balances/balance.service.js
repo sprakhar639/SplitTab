@@ -13,7 +13,7 @@ export function getMemberNetBalances(members, expenses, settlements) {
   const adjust = (userId, amount) => net.set(userId, (net.get(userId) ?? 0) + amount);
 
   for (const expense of expenses) {
-    adjust(expense.paidBy, expense.amount);
+    adjust(expense.paidBy.id, expense.amount);
 
     for (const split of expense.splits) {
       adjust(split.userId, -split.amount);

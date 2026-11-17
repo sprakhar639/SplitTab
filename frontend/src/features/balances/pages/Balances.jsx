@@ -21,12 +21,20 @@ function GroupBalancesList({ groupId, members, myId }) {
     if (members.length === 0) return;
 
     Promise.all([getExpenses(groupId, members), getSettlements(groupId)]).then(
-      ([expenses, settlements]) =>
-        setNets(getMemberNetBalances(members, expenses, settlements)),
+      ([expenses, settlements]) => {
+        console.log("MEMBERS:", members);
+        console.log("FIRST EXPENSE PAYER:", expenses[0]?.paidBy);
+        console.log("FIRST EXPENSE SPLITS:", expenses[0]?.splits);
+        console.log("ALL SETTLEMENTS:", settlements);
+        setNets(getMemberNetBalances(members, expenses, settlements));
+      },
     );
   }, [groupId, members]);
 
-  const largest = Math.max(1, ...(nets ?? []).map((net) => Math.abs(net.amount)));
+  const largest = Math.max(
+    1,
+    ...(nets ?? []).map((net) => Math.abs(net.amount)),
+  );
 
   return (
     <>
@@ -42,23 +50,36 @@ function GroupBalancesList({ groupId, members, myId }) {
             {nets.map(({ userId, amount }) => {
               const name = memberName(members, userId, myId);
               const tone =
-                amount > 0 ? "text-success" : amount < 0 ? "text-danger" : "text-mute";
+                amount > 0
+                  ? "text-success"
+                  : amount < 0
+                    ? "text-danger"
+                    : "text-mute";
 
               return (
-                <li key={userId} className="grid grid-cols-[32px_1fr_auto] items-center gap-3 px-4 py-3">
+                <li
+                  key={userId}
+                  className="grid grid-cols-[32px_1fr_auto] items-center gap-3 px-4 py-3"
+                >
                   <Avatar name={name} id={userId} />
                   <div className="flex flex-col gap-1.5">
                     <span className="text-sm font-semibold">{name}</span>
                     <span className="h-1.5 overflow-hidden rounded-full bg-canvas">
                       <span
                         className={`block h-full rounded-full ${amount >= 0 ? "bg-success" : "bg-danger"}`}
-                        style={{ width: `${(Math.abs(amount) / largest) * 100}%` }}
+                        style={{
+                          width: `${(Math.abs(amount) / largest) * 100}%`,
+                        }}
                       />
                     </span>
                   </div>
-                  <span className={`text-right text-sm font-bold tabular-nums ${tone}`}>
+                  <span
+                    className={`text-right text-sm font-bold tabular-nums ${tone}`}
+                  >
                     {amount > 0 ? "gets back " : amount < 0 ? "owes " : ""}
-                    {amount === 0 ? "settled" : formatCurrency(Math.abs(amount))}
+                    {amount === 0
+                      ? "settled"
+                      : formatCurrency(Math.abs(amount))}
                   </span>
                 </li>
               );
@@ -68,8 +89,8 @@ function GroupBalancesList({ groupId, members, myId }) {
       </div>
 
       <p className="text-xs text-mute">
-        Worked out from the expense and payment history shown in this app,
-        which is mock data for now (sample expenses included).
+        Worked out from the expense and payment history shown in this app, which
+        is mock data for now (sample expenses included).
       </p>
     </>
   );
@@ -77,7 +98,8 @@ function GroupBalancesList({ groupId, members, myId }) {
 
 export default function Balances() {
   const { groupId } = useParams();
-  const { group, members, myId, isAdmin, loading, error, setGroup } = useGroup(groupId);
+  const { group, members, myId, isAdmin, loading, error, setGroup } =
+    useGroup(groupId);
   const { balance, error: balanceError } = useMyBalance(groupId, myId);
 
   if (loading) return <Loader label="Loading group…" />;
@@ -102,7 +124,11 @@ export default function Balances() {
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_280px]">
         <div className="flex flex-col gap-3">
           <FeatureGate feature="groupBalances">
-            <GroupBalancesList groupId={groupId} members={members} myId={myId} />
+            <GroupBalancesList
+              groupId={groupId}
+              members={members}
+              myId={myId}
+            />
           </FeatureGate>
         </div>
 

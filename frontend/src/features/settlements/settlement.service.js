@@ -1,28 +1,30 @@
 import api from "../../services/api";
 import { mockSettlements } from "../../services/mockData";
 
-// amount is in paise: the settlement controller stores it as sent, and the
-// balance endpoint subtracts it from paise totals.
+// Amount is in rupees. Backend converts it to paise.
 export async function recordPayment(groupId, { toUserId, amount }) {
   const { settlement } = await api.post(`/settlements/groups/${groupId}`, {
     toUserId,
     amount,
   });
 
-  return mockSettlements.add(groupId, settlement);
+  return settlement;
 }
 
-// Mock for GET /settlements/:groupId
+// Fetch settlements from PostgreSQL.
 export function getSettlements(groupId) {
-  return mockSettlements.list(groupId);
+  return api.get(`/settlements/groups/${groupId}`);
 }
 
 export async function getAllSettlements(groups) {
-  const perGroup = await Promise.all(groups.map((group) => mockSettlements.list(group.id)));
+  const perGroup = await Promise.all(
+    groups.map((group) => getSettlements(group.id)),
+  );
+
   return perGroup.flat();
 }
 
-// Mock for POST /settlements/remind
+// Reminders remain mocked for now.
 export function sendPaymentReminder(userId, amount) {
   return mockSettlements.remind({ userId, amount });
 }

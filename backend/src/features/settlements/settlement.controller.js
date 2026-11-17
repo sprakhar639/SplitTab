@@ -1,6 +1,7 @@
 import {
   createSettlementService,
   getGroupBalanceByUserId,
+  getGroupSettlements,
 } from "./settlement.service.js";
 import AppError from "../../utils/AppError.js";
 
@@ -12,10 +13,7 @@ async function createSettlement(req, res, next) {
 
     const amountInRupees = Number(amount);
 
-    if (
-      !Number.isFinite(amountInRupees) ||
-      amountInRupees <= 0
-    ) {
+    if (!Number.isFinite(amountInRupees) || amountInRupees <= 0) {
       throw new AppError("Invalid settlement amount", 400);
     }
 
@@ -53,4 +51,20 @@ async function getBalanceController(req, res, next) {
   }
 }
 
-export { createSettlement, getBalanceController };
+async function getGroupSettlementsController(req, res, next) {
+  try {
+    const groupId = Number(req.params.groupId);
+
+    const settlements = await getGroupSettlements({ groupId });
+
+    return res.status(200).json(settlements);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export {
+  createSettlement,
+  getBalanceController,
+  getGroupSettlementsController,
+};

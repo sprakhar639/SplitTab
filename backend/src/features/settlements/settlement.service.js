@@ -100,17 +100,17 @@ async function getGroupBalanceByUserId({ groupId, userId }) {
   };
 }
 
-async function getGroupSettlement({ groupId }) {
-  const expenses = await db.orm.public.Expense.where((e) =>
-    e.groupId.eq(groupId),
+async function getGroupSettlements({ groupId }) {
+  const settlements = await Settlement.where((s) =>
+    s.groupId.eq(groupId),
   ).all();
 
-  for (const expense of expenses) {
-    const splits = await db.orm.public.ExpenseSplit.where((s) =>
-      s.expenseId.eq(expense.id),
-    ).all();
-    console.log(expense);
-    console.log(splits);
-  }
+  return settlements.sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+  );
 }
-export { createSettlementService, getGroupBalanceByUserId, getGroupSettlement };
+export {
+  createSettlementService,
+  getGroupBalanceByUserId,
+  getGroupSettlements,
+};

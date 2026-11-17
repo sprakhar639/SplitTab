@@ -18,9 +18,38 @@ import { getSettlements, recordPayment } from "../settlement.service";
 // Re-fetches whenever refreshKey changes (after a payment is recorded).
 function PaymentHistory({ groupId, members, myId, refreshKey }) {
   const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getSettlements(groupId).then(setHistory);
+    let cancelled = false;
+
+    async function loadHistory() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const settlements = await getSettlements(groupId);
+
+        if (!cancelled) {
+          setHistory(settlements);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || "Unable to load payment history.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
   }, [groupId, refreshKey]);
 
   return (
@@ -29,22 +58,34 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
         Payment history
       </h2>
 
-      {history.length === 0 ? (
+      {loading ? (
+        <p className="px-4 py-6 text-sm text-mute">Loading payments...</p>
+      ) : error ? (
+        <p className="px-4 py-6 text-sm text-danger">{error}</p>
+      ) : history.length === 0 ? (
         <p className="px-4 py-6 text-sm text-mute">No payments recorded yet.</p>
       ) : (
         <ul className="divide-y divide-line">
           {history.map((settlement) => {
             const from = memberName(members, settlement.fromUserId, myId);
             const to = memberName(members, settlement.toUserId, myId);
+
             return (
-              <li key={settlement.id} className="flex items-center gap-3 px-4 py-3">
+              <li
+                key={settlement.id}
+                className="flex items-center gap-3 px-4 py-3"
+              >
                 <Avatar name={to} id={settlement.toUserId} />
+
                 <div className="flex-1">
                   <p className="text-sm font-semibold">
                     {from} paid {to === "You" ? "you" : to}
                   </p>
-                  <p className="text-xs text-mute">{formatDate(settlement.createdAt)}</p>
+                  <p className="text-xs text-mute">
+                    {formatDate(settlement.createdAt)}
+                  </p>
                 </div>
+
                 <span className="text-sm font-bold tabular-nums">
                   {formatCurrency(settlement.amount)}
                 </span>
@@ -53,18 +94,19 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
           })}
         </ul>
       )}
-
-      <p className="border-t border-line px-4 py-2 text-xs text-mute">
-        History is kept in this browser until the backend can list settlements.
-      </p>
     </div>
   );
 }
 
 export default function Settlements() {
   const { groupId } = useParams();
-  const { group, members, myId, isAdmin, loading, error, setGroup } = useGroup(groupId);
-  const { balance, error: balanceError, reload: reloadBalance } = useMyBalance(groupId, myId);
+  const { group, members, myId, isAdmin, loading, error, setGroup } =
+    useGroup(groupId);
+  const {
+    balance,
+    error: balanceError,
+    reload: reloadBalance,
+  } = useMyBalance(groupId, myId);
 
   const [historyKey, setHistoryKey] = useState(0);
   const [toUserId, setToUserId] = useState("");
@@ -101,9 +143,11 @@ export default function Settlements() {
     setSaving(true);
     setNotice("");
     try {
-      await recordPayment(groupId, { toUserId: Number(toUserId), amount: amountInPaise });
+      await recordPayment(groupId, { toUserId: Number(toUserId), amount });
       const name = memberName(members, Number(toUserId), myId);
-      setNotice(`Payment of ${formatCurrency(amountInPaise)} to ${name} recorded`);
+      setNotice(
+        `Payment of ${formatCurrency(amountInPaise)} to ${name} recorded`,
+      );
       setAmount("");
       setToUserId("");
       setHistoryKey((key) => key + 1);
@@ -156,7 +200,9 @@ export default function Settlements() {
                 ))}
               </select>
               {errors.toUserId && (
-                <span className="text-xs font-semibold text-danger">{errors.toUserId}</span>
+                <span className="text-xs font-semibold text-danger">
+                  {errors.toUserId}
+                </span>
               )}
             </div>
 
@@ -189,7 +235,10 @@ export default function Settlements() {
               </p>
             )}
             {notice && (
-              <p role="status" className="rounded-lg bg-mint/30 px-3 py-2 text-sm font-semibold text-success">
+              <p
+                role="status"
+                className="rounded-lg bg-mint/30 px-3 py-2 text-sm font-semibold text-success"
+              >
                 ✓ {notice}
               </p>
             )}
@@ -200,7 +249,12 @@ export default function Settlements() {
           </form>
 
           <FeatureGate feature="paymentHistory">
-            <PaymentHistory groupId={groupId} members={members} myId={myId} refreshKey={historyKey} />
+            <PaymentHistory
+              groupId={groupId}
+              members={members}
+              myId={myId}
+              refreshKey={historyKey}
+            />
           </FeatureGate>
         </div>
 

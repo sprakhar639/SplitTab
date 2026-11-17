@@ -13,7 +13,9 @@ export default function SettleUpModal({ person, onClose, onRecorded }) {
   const owing = person.groups.filter(({ amount }) => amount < 0);
 
   const [groupId, setGroupId] = useState(owing[0]?.group.id ?? null);
-  const [amount, setAmount] = useState(owing[0] ? (-owing[0].amount / 100).toFixed(2) : "");
+  const [amount, setAmount] = useState(
+    owing[0] ? (-owing[0].amount / 100).toFixed(2) : "",
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -34,8 +36,13 @@ export default function SettleUpModal({ person, onClose, onRecorded }) {
 
     setSaving(true);
     try {
-      await recordPayment(groupId, { toUserId: person.id, amount: amountInPaise });
-      onRecorded(`Payment of ${formatCurrency(amountInPaise)} to ${person.name} recorded`);
+      await recordPayment(groupId, {
+        toUserId: person.id,
+        amount,
+      });
+      onRecorded(
+        `Payment of ${formatCurrency(amountInPaise)} to ${person.name} recorded`,
+      );
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -56,7 +63,9 @@ export default function SettleUpModal({ person, onClose, onRecorded }) {
             <label
               key={entry.group.id}
               className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm transition ${
-                groupId === entry.group.id ? "border-deep bg-canvas" : "border-line hover:border-deep/40"
+                groupId === entry.group.id
+                  ? "border-deep bg-canvas"
+                  : "border-line hover:border-deep/40"
               }`}
             >
               <span className="flex items-center gap-2 font-semibold">
@@ -69,7 +78,9 @@ export default function SettleUpModal({ person, onClose, onRecorded }) {
                 />
                 {entry.group.name}
               </span>
-              <span className="tabular-nums text-danger">{formatCurrency(-entry.amount)}</span>
+              <span className="tabular-nums text-danger">
+                {formatCurrency(-entry.amount)}
+              </span>
             </label>
           ))}
         </fieldset>
@@ -88,7 +99,8 @@ export default function SettleUpModal({ person, onClose, onRecorded }) {
 
         {isPreview && (
           <p className="text-xs font-semibold text-amber-800">
-            Payments can't be recorded in a preview, because the amounts are sample data.
+            Payments can't be recorded in a preview, because the amounts are
+            sample data.
           </p>
         )}
 

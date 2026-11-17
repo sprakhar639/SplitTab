@@ -4,10 +4,14 @@ import formatCurrency from "../../../shared/utils/formatCurrency";
 import { memberName } from "../../../shared/utils/members";
 
 function myPosition(expense, myId) {
-  const myShare = expense.splits.find((split) => split.userId === myId)?.amount ?? 0;
+  const myShare =
+    expense.splits.find((split) => split.userId === myId)?.amount ?? 0;
 
   if (expense.paidBy === myId) {
-    return { label: `you lent ${formatCurrency(expense.amount - myShare)}`, tone: "text-success" };
+    return {
+      label: `you lent ${formatCurrency(expense.amount - myShare)}`,
+      tone: "text-success",
+    };
   }
   if (myShare > 0) {
     return { label: `you owe ${formatCurrency(myShare)}`, tone: "text-danger" };
@@ -15,9 +19,17 @@ function myPosition(expense, myId) {
   return { label: "not involved", tone: "text-mute" };
 }
 
-export default function ExpenseCard({ expense, members, myId, groupId, groupName }) {
+export default function ExpenseCard({
+  expense,
+  members,
+  myId,
+  groupId,
+  groupName,
+}) {
   const position = myPosition(expense, myId);
   const title = expense.description || "Expense";
+
+  console.log({ expense, members, myId, groupId, groupName });
 
   return (
     <Link
@@ -38,14 +50,17 @@ export default function ExpenseCard({ expense, members, myId, groupId, groupName
           )}
         </p>
         <p className="text-xs text-mute">
-          {memberName(members, expense.paidBy, myId)} paid · {expense.splits.length}{" "}
+          {memberName(members, expense.paidBy.id, myId)} paid{" "}
+          {expense.splits.length}{" "}
           {expense.splits.length === 1 ? "person" : "people"}
           {groupName && ` · ${groupName}`}
         </p>
       </div>
 
       <div className="text-right">
-        <p className="font-extrabold tabular-nums">{formatCurrency(expense.amount)}</p>
+        <p className="font-extrabold tabular-nums">
+          {formatCurrency(expense.amount)}
+        </p>
         <p className={`text-xs ${position.tone}`}>{position.label}</p>
       </div>
     </Link>

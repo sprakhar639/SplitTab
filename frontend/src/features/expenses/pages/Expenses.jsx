@@ -341,11 +341,6 @@ export default function Expenses() {
           ))
         )}
       </div>
-
-      <p className="text-xs text-mute">
-        Expense history is mock data until the backend can list expenses.
-        Expenses marked Sample aren't in the database.
-      </p>
     </div>
   );
 }

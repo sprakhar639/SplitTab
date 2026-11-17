@@ -13,9 +13,11 @@ export async function createExpense(groupId, payload) {
   return mockExpenses.add(groupId, { ...expense, splits });
 }
 
-// Mock for GET /expense/:groupId/expenses
-export function getExpenses(groupId, members) {
-  return mockExpenses.list(groupId, members);
+//GET /expense/:groupId/expenses
+export async function getExpenses(groupId) {
+  const expenseList = await api.get(`/expense/${groupId}/expenses`);
+
+  return expenseList.expenses;
 }
 
 // Mock for GET /expense/:groupId/expenses/:expenseId

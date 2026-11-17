@@ -23,19 +23,19 @@ export const FEATURES = {
     needs: ["GET /expense/:groupId/expenses"],
   },
   groupBalances: {
-    ready: false,
+    ready: true,
     title: "Group balances",
     description: "See who's up and who's down in this group.",
     needs: ["GET /expense/:groupId/expenses", "GET /settlements/:groupId"],
   },
   paymentHistory: {
-    ready: false,
+    ready: true,
     title: "Payment history",
     description: "A record of every payment made in this group.",
     needs: ["GET /settlements/:groupId"],
   },
   peopleBalances: {
-    ready: false,
+    ready: true,
     title: "Settlements",
     description: "See what you owe and are owed by each person, across all your groups.",
     highlights: [
@@ -46,7 +46,7 @@ export const FEATURES = {
     needs: ["GET /expense/:groupId/expenses", "GET /settlements/:groupId", "POST /settlements/remind"],
   },
   memberSearch: {
-    ready: false,
+    ready: true,
     title: "Find people",
     description: "Search for people by name, username or email.",
     needs: ["GET /users/search?q="],

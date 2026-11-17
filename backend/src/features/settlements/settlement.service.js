@@ -34,7 +34,7 @@ async function createSettlementService({
   return settlement;
 }
 
-async function getBalanceService({ groupId, userId }) {
+async function getGroupBalanceByUserId({ groupId, userId }) {
   const { GroupMember, Expense, ExpenseSplit, Settlement } = db.orm.public;
 
   // 1. Verify group membership
@@ -113,4 +113,4 @@ async function getGroupSettlement({ groupId }) {
     console.log(splits);
   }
 }
-export { createSettlementService, getBalanceService, getGroupSettlement };
+export { createSettlementService, getGroupBalanceByUserId, getGroupSettlement };

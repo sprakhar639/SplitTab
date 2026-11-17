@@ -1,6 +1,6 @@
 import {
   createSettlementService,
-  getBalanceService,
+  getGroupBalanceByUserId,
 } from "./settlement.service.js";
 import AppError from "../../utils/AppError.js";
 
@@ -42,7 +42,7 @@ async function getBalanceController(req, res, next) {
     const groupId = Number(req.params.groupId);
     const userId = req.user.id;
 
-    const balance = await getBalanceService({
+    const balance = await getGroupBalanceByUserId({
       groupId,
       userId,
     });

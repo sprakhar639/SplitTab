@@ -15,8 +15,12 @@ import useGroup from "../hooks/useGroup";
 function groupByDay(expenses) {
   const days = new Map();
 
+  console.log({ expenses });
+
   for (const expense of expenses) {
-    const day = formatDate(expense.createdAt, { year: undefined }).toUpperCase();
+    const day = formatDate(expense.createdAt, {
+      year: undefined,
+    }).toUpperCase();
     days.set(day, [...(days.get(day) ?? []), expense]);
   }
 
@@ -27,7 +31,8 @@ function ExpenseList({ groupId, members, myId }) {
   const [expenses, setExpenses] = useState(null);
 
   useEffect(() => {
-    getExpenses(groupId, members).then(setExpenses);
+    console.log(groupId, members);
+    getExpenses(groupId).then(setExpenses);
   }, [groupId, members]);
 
   return (
@@ -60,12 +65,6 @@ function ExpenseList({ groupId, members, myId }) {
           ))
         )}
       </div>
-
-      <p className="text-xs text-mute">
-        Expense history is mock data until the backend can list expenses.
-        Expenses marked Sample aren't in the database and don't affect your
-        balance.
-      </p>
     </>
   );
 }
@@ -78,7 +77,10 @@ function ExpensesTab({ groupId, members, myId }) {
     <div className="grid items-start gap-4 lg:grid-cols-[1fr_280px]">
       <div className="flex flex-col gap-3">
         {location.state?.message && (
-          <p role="status" className="rounded-lg bg-mint/30 px-3 py-2 text-sm font-semibold text-success">
+          <p
+            role="status"
+            className="rounded-lg bg-mint/30 px-3 py-2 text-sm font-semibold text-success"
+          >
             ✓ {location.state.message}
           </p>
         )}

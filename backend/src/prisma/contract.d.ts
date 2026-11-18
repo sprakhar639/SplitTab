@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'d96dc94828b21ab56e7d27f264efc786b97c5ad7ae41b18f52a878a95c6d5236'>;
+  StorageHashBase<'c48579612fa747b1ceec4c53511771ecf7d66308a70f2f65743ce4ecaea84983'>;
 export type ExecutionHash =
   ExecutionHashBase<'8ab922e6a9a536f0e1e59bb344fa0a15110d99153831ec0a0d7c06cc479f6b70'>;
 export type ProfileHash =
@@ -277,6 +277,7 @@ export type FieldOutputTypes = {
       readonly toUserId: CodecTypes['pg/int4@1']['output'];
       readonly amount: CodecTypes['pg/int4@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly is_deleted: CodecTypes['pg/bool@1']['output'];
     };
     readonly User: {
       readonly id: CodecTypes['pg/int4@1']['output'];
@@ -326,6 +327,7 @@ export type FieldInputTypes = {
       readonly toUserId: CodecTypes['pg/int4@1']['input'];
       readonly amount: CodecTypes['pg/int4@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly is_deleted: CodecTypes['pg/bool@1']['input'];
     };
     readonly User: {
       readonly id: CodecTypes['pg/int4@1']['input'];
@@ -374,6 +376,7 @@ export type StorageColumnTypes = {
       readonly fromUserId: CodecTypes['pg/int4@1']['output'];
       readonly groupId: CodecTypes['pg/int4@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly is_deleted: CodecTypes['pg/bool@1']['output'];
       readonly toUserId: CodecTypes['pg/int4@1']['output'];
     };
     readonly users: {
@@ -423,6 +426,7 @@ export type StorageColumnInputTypes = {
       readonly fromUserId: CodecTypes['pg/int4@1']['input'];
       readonly groupId: CodecTypes['pg/int4@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly is_deleted: CodecTypes['pg/bool@1']['input'];
       readonly toUserId: CodecTypes['pg/int4@1']['input'];
     };
     readonly users: {
@@ -510,6 +514,7 @@ export namespace Models {
     toUserId: CodecTypes['pg/int4@1']['output'];
     amount: CodecTypes['pg/int4@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+    is_deleted: CodecTypes['pg/bool@1']['output'];
     from: public_User;
     group: public_Group;
     to: public_User;
@@ -863,6 +868,15 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+                readonly is_deleted: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
@@ -1316,6 +1330,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                 };
               };
+              readonly is_deleted: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
             };
             readonly relations: {
               readonly from: {
@@ -1359,6 +1377,7 @@ type ContractBase = Omit<
                 readonly toUserId: { readonly column: 'toUserId' };
                 readonly amount: { readonly column: 'amount' };
                 readonly createdAt: { readonly column: 'createdAt' };
+                readonly is_deleted: { readonly column: 'is_deleted' };
               };
             };
           };

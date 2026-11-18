@@ -1,118 +1,97 @@
 // use prisma-8
-
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String   @unique
-  name      String
-  passwordHash String
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+  id                  Int                        @id @default(autoincrement())
+  email               String                     @unique
+  username            String                     @unique
+  name                String
+  passwordHash        String
+  createdAt           TimestamptzString          @default(now())
+  updatedAt           temporal.updatedAtString()
 
-  groupMembers GroupMember[]
-  expensesPaid Expense[]
-  splits ExpenseSplit[]
-  settlementsSent Settlement[] @relation("SettlementFrom")
-  settlementsReceived Settlement[] @relation("SettlementTo")
-  createdGroups Group[] @relation("GroupCreater")
+  groupMembers        GroupMember[]
+  expensesPaid        Expense[]
+  splits              ExpenseSplit[]
+  settlementsSent     Settlement[]               @relation("SettlementFrom")
+  settlementsReceived Settlement[]               @relation("SettlementTo")
+  createdGroups       Group[]                    @relation("GroupCreater")
+
   @@map("users")
 }
 
-
-
-
 model Group {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
-  isDeleted Boolean  @default(false)
-  deletedAt TimestamptzString?
+  id          Int                        @id @default(autoincrement())
+  name        String
+  createdAt   TimestamptzString          @default(now())
+  updatedAt   temporal.updatedAtString()
+  isDeleted   Boolean                    @default(false)
+  deletedAt   TimestamptzString?
 
   createdById Int
-  createdBy User @relation("GroupCreater",fields:[createdById],references:[id])
-  members GroupMember[]
-  expenses Expense[]
+  createdBy   User                       @relation("GroupCreater", fields:[createdById], references:[id])
+  members     GroupMember[]
+  expenses    Expense[]
   settlements Settlement[]
+
   @@map("groups")
 }
 
-
-
-
-
-
-model GroupMember{
+model GroupMember {
   groupId  Int
-  userId Int
-  role String
+  userId   Int
+  role     String
   joinedAt TimestamptzString @default(now())
 
-  group Group @relation (fields:[groupId], references:[id])
-  user User @relation (fields:[userId], references:[id])
-  
-  @@id([groupId,userId])
+  group    Group             @relation(fields:[groupId], references:[id])
+  user     User              @relation(fields:[userId], references:[id])
+
+  @@id([groupId, userId])
   @@index([userId])
   @@map("group_members")
 }
 
-
-
-
-
-
-
-
-model Expense{
-  id Int @id @default(autoincrement())
-  groupId Int
-  paidBy Int
-  amount Int
+model Expense {
+  id          Int               @id @default(autoincrement())
+  groupId     Int
+  paidBy      Int
+  amount      Int
   description String?
-  createdAt TimestamptzString @default(now())
+  createdAt   TimestamptzString @default(now())
 
-  group Group @relation(fields:[groupId],references:[id])
-  payer User @relation(fields:[paidBy],references:[id])
+  group       Group             @relation(fields:[groupId], references:[id])
+  payer       User              @relation(fields:[paidBy], references:[id])
 
-  splits ExpenseSplit[]
+  splits      ExpenseSplit[]
+
   @@index([groupId])
   @@index([paidBy])
   @@map("expenses")
 }
 
+model ExpenseSplit {
+  expenseId Int
+  userId    Int
+  amount    Int
 
+  expense   Expense @relation(fields:[expenseId], references:[id])
+  user      User    @relation(fields:[userId], references:[id])
 
-
-
-
-model ExpenseSplit{
-   expenseId Int
-   userId  Int
-   amount Int
-
-   expense Expense @relation(fields: [expenseId],references:[id])
-   user User @relation(fields: [userId],references:[id])
-  
-   @@id([expenseId,userId])
-   @@index([userId])
-   @@map("expense_splits")
+  @@id([expenseId, userId])
+  @@index([userId])
+  @@map("expense_splits")
 }
 
-
-
-
-
-model Settlement{
-  id Int @id @default(autoincrement())
-  groupId Int
+model Settlement {
+  id         Int               @id @default(autoincrement())
+  groupId    Int
   fromUserId Int
-  toUserId Int
-  amount Int
-  createdAt TimestamptzString @default(now())
+  toUserId   Int
+  amount     Int
+  createdAt  TimestamptzString @default(now())
+  is_deleted Boolean           @default(false) @map("is_deleted")
 
-  group Group @relation(fields:[groupId],references:[id])
-  from User @relation("SettlementFrom",fields:[fromUserId],references:[id])
-  to User @relation("SettlementTo",fields:[toUserId],references:[id])
+  group      Group             @relation(fields:[groupId], references:[id])
+  from       User              @relation("SettlementFrom", fields:[fromUserId], references:[id])
+  to         User              @relation("SettlementTo", fields:[toUserId], references:[id])
+
   @@map("settlement")
 }
-

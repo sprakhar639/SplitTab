@@ -19,8 +19,11 @@ export async function getExpenses(groupId) {
 }
 
 // Individual expense fetching is not implemented yet.
-export function getExpense() {
-  throw new Error("Individual expense fetching is not implemented yet.");
+export async function getExpenseById(groupId, expenseId) {
+  const expense = await api.get(
+    `/expense/group/${groupId}/expense/${expenseId}`,
+  );
+  return expense.expense;
 }
 
 export async function getAllExpenses() {

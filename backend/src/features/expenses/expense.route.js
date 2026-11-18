@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   createExpenseWithSplitsController,
   getGroupExpensesController,
+  getExpenseByIdController,
 } from "./expense.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
@@ -23,6 +24,13 @@ route.get(
   authMiddleware,
   groupMiddleware,
   getGroupExpensesController,
+);
+
+route.get(
+  "/group/:groupId/expense/:expenseId",
+  authMiddleware,
+  groupMiddleware,
+  getExpenseByIdController,
 );
 
 export default route;

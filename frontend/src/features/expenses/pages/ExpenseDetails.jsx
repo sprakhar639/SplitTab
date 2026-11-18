@@ -7,7 +7,7 @@ import formatCurrency from "../../../shared/utils/formatCurrency";
 import formatDate from "../../../shared/utils/formatDate";
 import { memberName } from "../../../shared/utils/members";
 import useGroup from "../../groups/hooks/useGroup";
-import { getExpense } from "../expense.service";
+import { getExpenseById } from "../expense.service";
 
 export default function ExpenseDetails() {
   const { groupId, expenseId } = useParams();
@@ -16,11 +16,12 @@ export default function ExpenseDetails() {
   const [expenseError, setExpenseError] = useState("");
 
   useEffect(() => {
-    getExpense(groupId, expenseId)
+    getExpenseById(groupId, expenseId)
       .then(setExpense)
       .catch((err) => setExpenseError(err.message));
   }, [groupId, expenseId]);
 
+  console.log({ expense });
   if (error || expenseError) {
     return (
       <p className="rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-danger">
@@ -60,7 +61,7 @@ export default function ExpenseDetails() {
             {formatCurrency(expense.amount)}
           </p>
           <p className="text-sm text-mute">
-            Paid by {memberName(members, expense.paidBy, myId)} on{" "}
+            Paid by {memberName(members, expense.paidBy.id, myId)} on{" "}
             {formatDate(expense.createdAt)}
           </p>
         </div>
@@ -69,7 +70,10 @@ export default function ExpenseDetails() {
           {expense.splits.map((split) => {
             const name = memberName(members, split.userId, myId);
             return (
-              <li key={split.userId} className="flex items-center gap-3 px-6 py-3">
+              <li
+                key={split.userId}
+                className="flex items-center gap-3 px-6 py-3"
+              >
                 <Avatar name={name} id={split.userId} />
                 <span className="flex-1 text-sm font-semibold">{name}</span>
                 <span className="text-sm font-bold tabular-nums">

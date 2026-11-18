@@ -2,6 +2,7 @@ import {
   createExpenseWithSplits,
   equalSplit,
   getGroupExpenses,
+  getExpenseById,
 } from "./expense.service.js";
 
 import AppError from "../../utils/AppError.js";
@@ -87,4 +88,25 @@ async function getGroupExpensesController(req, res, next) {
   }
 }
 
-export { createExpenseWithSplitsController, getGroupExpensesController };
+async function getExpenseByIdController(req, res, next) {
+  try {
+    const groupId = Number(req.params.groupId);
+    const expenseId = Number(req.params.expenseId);
+
+    const expense = await getExpenseById(groupId, expenseId);
+
+    if (!expense) {
+      throw new AppError("Expense not found", 404);
+    }
+
+    return res.status(200).json({ expense });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export {
+  createExpenseWithSplitsController,
+  getGroupExpensesController,
+  getExpenseByIdController,
+};

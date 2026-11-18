@@ -213,4 +213,68 @@ async function getGroupExpenses(groupId) {
   });
 }
 
-export { equalSplit, createExpenseWithSplits, getGroupExpenses };
+async function getExpenseById(groupId, expenseId) {
+  if (!Number.isSafeInteger(groupId) || groupId <= 0) {
+    throw new AppError("Invalid group ID", 400);
+  }
+
+  if (!Number.isSafeInteger(expenseId) || expenseId <= 0) {
+    throw new AppError("Invalid expense ID", 400);
+  }
+
+  // 1. Fetch a single expense
+  const expense = await Expense.where((e) =>
+    and(e.groupId.eq(groupId), e.id.eq(expenseId)),
+  ).first();
+
+  if (!expense) {
+    return null;
+  }
+
+  // 2. Fetch splits for this expense
+  const splits = await ExpenseSplit.where((s) =>
+    s.expenseId.eq(expenseId),
+  ).all();
+
+  // 3. Collect unique user IDs
+  const userIds = [
+    ...new Set([expense.paidBy, ...splits.map((split) => split.userId)]),
+  ];
+
+  // 4. Fetch users
+  const users = await User.where((u) => u.id.in(userIds)).all();
+
+  // 5. Find payer
+  const payer = users.find((user) => user.id === expense.paidBy);
+
+  // 6. Attach user details to splits
+  const expenseSplits = splits.map((split) => {
+    const user = users.find((user) => user.id === split.userId);
+
+    return {
+      userId: split.userId,
+      name: user?.name,
+      amount: split.amount,
+    };
+  });
+
+  // 7. Return a single expense object
+  return {
+    id: expense.id,
+    description: expense.description,
+    amount: expense.amount,
+    createdAt: expense.createdAt,
+    paidBy: {
+      id: expense.paidBy,
+      name: payer?.name,
+    },
+    splits: expenseSplits,
+  };
+}
+
+export {
+  equalSplit,
+  createExpenseWithSplits,
+  getGroupExpenses,
+  getExpenseById,
+};

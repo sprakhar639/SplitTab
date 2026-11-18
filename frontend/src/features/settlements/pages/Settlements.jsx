@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
+import { Trash2 } from "lucide-react";
 import Avatar from "../../../shared/components/Avatar";
 import FeatureGate from "../../../shared/components/FeatureGate";
 import Button from "../../../shared/components/Button";
@@ -13,13 +13,18 @@ import BalanceCard from "../../balances/components/BalanceCard";
 import useMyBalance from "../../balances/hooks/useMyBalance";
 import GroupHeader from "../../groups/components/GroupHeader";
 import useGroup from "../../groups/hooks/useGroup";
-import { getSettlements, recordPayment } from "../settlement.service";
+import {
+  getSettlements,
+  recordPayment,
+  deleteSettlementsById,
+} from "../settlement.service";
 
 // Re-fetches whenever refreshKey changes (after a payment is recorded).
 function PaymentHistory({ groupId, members, myId, refreshKey }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +35,7 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
 
       try {
         const settlements = await getSettlements(groupId);
-
+        console.log({ settlements });
         if (!cancelled) {
           setHistory(settlements);
         }
@@ -51,6 +56,25 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
       cancelled = true;
     };
   }, [groupId, refreshKey]);
+
+  const onDelete = async (settlementId) => {
+    try {
+      await deleteSettlementsById(settlementId);
+
+      setHistory((prev) =>
+        prev.filter((settlement) => settlement.id !== settlementId),
+      );
+
+      setToast("Settlement deleted successfully");
+
+      setTimeout(() => setToast(""), 3000);
+    } catch (error) {
+      console.error(error);
+      setToast("Failed to delete settlement");
+
+      setTimeout(() => setToast(""), 3000);
+    }
+  };
 
   return (
     <div className="rounded-xl border border-line bg-white">
@@ -89,10 +113,29 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
                 <span className="text-sm font-bold tabular-nums">
                   {formatCurrency(settlement.amount)}
                 </span>
+
+                <button
+                  type="button"
+                  onClick={() => onDelete(settlement.id)}
+                  aria-label="Delete settlement"
+                  title="Delete settlement"
+                  className="rounded-md p-2 text-mute transition hover:bg-red-50 hover:text-danger"
+                >
+                  <Trash2 size={16} />
+                </button>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          className="fixed bottom-5 left-5 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+        >
+          {toast}
+        </div>
       )}
     </div>
   );

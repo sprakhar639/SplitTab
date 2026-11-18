@@ -16,6 +16,11 @@ export function getSettlements(groupId) {
   return api.get(`/settlements/groups/${groupId}`);
 }
 
+// Delete settlements from PostgreSQL.
+export async function deleteSettlementsById(settlementId) {
+  await api.delete(`/settlements/${settlementId}`);
+}
+
 export async function getAllSettlements(groups) {
   const perGroup = await Promise.all(
     groups.map((group) => getSettlements(group.id)),

@@ -1,4 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import * as authService from "../features/auth/services/auth.service";
 
@@ -30,6 +36,11 @@ export function AuthProvider({ children }) {
     setUser(await authService.fetchCurrentUser());
   }, []);
 
+  const register = useCallback(async (userData) => {
+    await authService.registerUser(userData);
+    setUser(await authService.fetchCurrentUser());
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await authService.logoutUser();
@@ -44,7 +55,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

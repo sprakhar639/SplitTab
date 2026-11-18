@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import AuthVisual from "../components/AuthVisual";
-import { registerUser } from "../services/auth.service";
+import { useAuth } from "../../../context/AuthContext";
 import "../styles/Auth.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -10,6 +10,7 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -97,18 +98,14 @@ export default function Register() {
       setLoading(true);
       setServerError("");
 
-      await registerUser({
+      await register({
         name: formData.name.trim(),
         username: formData.username.trim(),
         email: formData.email.trim(),
         password: formData.password,
       });
 
-      navigate("/login", {
-        state: {
-          message: "Registration successful. Please log in.",
-        },
-      });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       setServerError(error.message || "Registration failed");
     } finally {
@@ -234,40 +231,28 @@ export default function Register() {
                   onChange={handleChange}
                   placeholder="Confirm your password"
                   autoComplete="new-password"
-                  className={
-                    errors.confirmPassword ? "input-error" : ""
-                  }
+                  className={errors.confirmPassword ? "input-error" : ""}
                 />
 
                 <button
                   type="button"
                   className="password-toggle"
-                  onClick={() =>
-                    setShowConfirmPassword((prev) => !prev)
-                  }
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
                 >
                   {showConfirmPassword ? "Hide" : "Show"}
                 </button>
               </div>
 
               {errors.confirmPassword && (
-                <span className="field-error">
-                  {errors.confirmPassword}
-                </span>
+                <span className="field-error">{errors.confirmPassword}</span>
               )}
             </div>
 
             {/* Backend Error */}
-            {serverError && (
-              <p className="field-error">{serverError}</p>
-            )}
+            {serverError && <p className="field-error">{serverError}</p>}
 
             {/* Submit */}
-            <button
-              type="submit"
-              className="auth-submit"
-              disabled={loading}
-            >
+            <button type="submit" className="auth-submit" disabled={loading}>
               {loading ? "Creating account..." : "Create account"}
               {!loading && <span>→</span>}
             </button>

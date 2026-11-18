@@ -68,7 +68,7 @@ async function getGroupBalanceByUserId({ groupId, userId }) {
 
   // 6. Fetch settlements sent by the user
   const sentSettlements = await Settlement.where((s) =>
-    and(s.groupId.eq(groupId), s.fromUserId.eq(userId)),
+    and(s.groupId.eq(groupId), s.fromUserId.eq(userId), s.is_deleted.eq(false)),
   ).all();
 
   const settlementsSent = sentSettlements.reduce(
@@ -78,7 +78,7 @@ async function getGroupBalanceByUserId({ groupId, userId }) {
 
   // 7. Fetch settlements received by the user
   const receivedSettlements = await Settlement.where((s) =>
-    and(s.groupId.eq(groupId), s.toUserId.eq(userId)),
+    and(s.groupId.eq(groupId), s.toUserId.eq(userId), s.is_deleted.eq(false)),
   ).all();
 
   const settlementsReceived = receivedSettlements.reduce(
@@ -102,15 +102,50 @@ async function getGroupBalanceByUserId({ groupId, userId }) {
 
 async function getGroupSettlements({ groupId }) {
   const settlements = await Settlement.where((s) =>
-    s.groupId.eq(groupId),
+    and(s.groupId.eq(groupId), s.is_deleted.eq(false)),
   ).all();
 
   return settlements.sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
   );
 }
+
+async function deleteSettlementById({ settlementId, userId }) {
+  console.log({ userId, settlementId });
+  // 1. Validate settlement ID
+  if (!Number.isSafeInteger(settlementId) || settlementId <= 0) {
+    throw new AppError("Invalid settlement ID", 400);
+  }
+
+  // 2. Find settlement
+  const settlement = await Settlement.where((se) =>
+    and(se.id.eq(settlementId), se.is_deleted.eq(false)),
+  ).first();
+
+  if (!settlement) {
+    throw new AppError("Settlement does not exist", 404);
+  }
+
+  // 3. Check ownership
+  if (settlement.fromUserId !== userId) {
+    throw new AppError("Forbidden to perform action", 403);
+  }
+
+  // 4. Check whether already deleted
+  if (settlement.isDeleted) {
+    throw new AppError("Settlement already deleted", 409);
+  }
+
+  // 5. Soft delete
+  await Settlement.where((se) => se.id.eq(settlementId)).update({
+    is_deleted: true,
+  });
+
+  return { message: "Settlement deleted successfully" };
+}
 export {
   createSettlementService,
   getGroupBalanceByUserId,
   getGroupSettlements,
+  deleteSettlementById,
 };

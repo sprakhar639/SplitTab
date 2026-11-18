@@ -2,6 +2,7 @@ import {
   createSettlementService,
   getGroupBalanceByUserId,
   getGroupSettlements,
+  deleteSettlementById,
 } from "./settlement.service.js";
 import AppError from "../../utils/AppError.js";
 
@@ -63,8 +64,21 @@ async function getGroupSettlementsController(req, res, next) {
   }
 }
 
+async function deleteSettlementByIdController(req, res, next) {
+  try {
+    console.log(req.params);
+    const userId = Number(req.user.id);
+    const settlementId = Number(req.params.settlementId);
+    const result = await deleteSettlementById({ userId, settlementId });
+    return res.status(200).json({ message: "Settlement deleted Successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export {
   createSettlement,
   getBalanceController,
   getGroupSettlementsController,
+  deleteSettlementByIdController,
 };

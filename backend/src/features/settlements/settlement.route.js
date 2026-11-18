@@ -3,6 +3,7 @@ import {
   createSettlement,
   getBalanceController,
   getGroupSettlementsController,
+  deleteSettlementByIdController,
 } from "./settlement.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
@@ -29,6 +30,12 @@ route.get(
   authMiddleware,
   groupMiddleware,
   getBalanceController,
+);
+route.delete(
+  "/group/:groupId/settlement/:settlementId",
+  authMiddleware,
+  groupMiddleware,
+  deleteSettlementByIdController,
 );
 
 export default route;

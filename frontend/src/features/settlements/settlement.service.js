@@ -17,8 +17,10 @@ export function getSettlements(groupId) {
 }
 
 // Delete settlements from PostgreSQL.
-export async function deleteSettlementsById(settlementId) {
-  await api.delete(`/settlements/${settlementId}`);
+// Delete localhost:3000/api/settlements/1
+
+export async function deleteSettlementsById(groupId, settlementId) {
+  await api.delete(`/settlements/group/${groupId}/settlement/${settlementId}`);
 }
 
 export async function getAllSettlements(groups) {

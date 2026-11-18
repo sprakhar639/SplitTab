@@ -57,10 +57,13 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
     };
   }, [groupId, refreshKey]);
 
-  const onDelete = async (settlementId) => {
+  const onDelete = async (groupId, settlementId) => {
     try {
-      await deleteSettlementsById(settlementId);
+      console.log("Deleting:", settlementId);
 
+      const response = await deleteSettlementsById(groupId, settlementId);
+
+      console.log("API response:", response);
       setHistory((prev) =>
         prev.filter((settlement) => settlement.id !== settlementId),
       );
@@ -69,7 +72,7 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
 
       setTimeout(() => setToast(""), 3000);
     } catch (error) {
-      console.error(error);
+      console.error("Delete error:", error.response?.data || error);
       setToast("Failed to delete settlement");
 
       setTimeout(() => setToast(""), 3000);
@@ -116,7 +119,7 @@ function PaymentHistory({ groupId, members, myId, refreshKey }) {
 
                 <button
                   type="button"
-                  onClick={() => onDelete(settlement.id)}
+                  onClick={() => onDelete(settlement.groupId, settlement.id)}
                   aria-label="Delete settlement"
                   title="Delete settlement"
                   className="rounded-md p-2 text-mute transition hover:bg-red-50 hover:text-danger"

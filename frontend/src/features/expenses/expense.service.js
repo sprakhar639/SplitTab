@@ -26,6 +26,19 @@ export async function getExpenseById(groupId, expenseId) {
   return expense.expense;
 }
 
+// Takes the same payload as createExpense; the payer doesn't change.
+export async function updateExpense(groupId, expenseId, payload) {
+  const { expense } = await api.patch(
+    `/expense/group/${groupId}/expense/${expenseId}`,
+    payload,
+  );
+  return expense;
+}
+
+export async function deleteExpense(groupId, expenseId) {
+  await api.delete(`/expense/group/${groupId}/expense/${expenseId}`);
+}
+
 export async function getAllExpenses() {
   const groups = await getMyGroups();
 

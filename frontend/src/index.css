@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-deep: #06251e;
+  --color-deep-2: #0b3328;
+  --color-mint: #91e6bd;
+  --color-lime: #b8ed69;
+  --color-ink: #10261e;
+  --color-mute: #64786f;
+  --color-line: #dde6e0;
+  --color-canvas: #f2f6f3;
+  --color-danger: #c2412f;
+  --color-success: #1c7d52;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}

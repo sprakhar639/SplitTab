@@ -1,0 +1,284 @@
+[
+  {
+    "id": "table.settlement",
+    "label": "Create table \"settlement\"",
+    "summary": "Creates table \"settlement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "settlement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"settlement\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"settlement\"",
+        "sql": "CREATE TABLE \"public\".\"settlement\" (\n  \"amount\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"fromUserId\" int4 NOT NULL,\n  \"groupId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"toUserId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"settlement\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.settlement.settlement_fromUserId_idx_9c2ca0ee",
+    "label": "Create index \"settlement_fromUserId_idx_9c2ca0ee\" on \"settlement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "settlement_fromUserId_idx_9c2ca0ee",
+        "table": "settlement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"settlement_fromUserId_idx_9c2ca0ee\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement_fromUserId_idx_9c2ca0ee\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"settlement_fromUserId_idx_9c2ca0ee\"",
+        "sql": "CREATE INDEX \"settlement_fromUserId_idx_9c2ca0ee\" ON \"public\".\"settlement\" (\"fromUserId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"settlement_fromUserId_idx_9c2ca0ee\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement_fromUserId_idx_9c2ca0ee\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.settlement.settlement_groupId_idx_e2fb5578",
+    "label": "Create index \"settlement_groupId_idx_e2fb5578\" on \"settlement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "settlement_groupId_idx_e2fb5578",
+        "table": "settlement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"settlement_groupId_idx_e2fb5578\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement_groupId_idx_e2fb5578\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"settlement_groupId_idx_e2fb5578\"",
+        "sql": "CREATE INDEX \"settlement_groupId_idx_e2fb5578\" ON \"public\".\"settlement\" (\"groupId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"settlement_groupId_idx_e2fb5578\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement_groupId_idx_e2fb5578\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.settlement.settlement_toUserId_idx_397e108f",
+    "label": "Create index \"settlement_toUserId_idx_397e108f\" on \"settlement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "settlement_toUserId_idx_397e108f",
+        "table": "settlement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"settlement_toUserId_idx_397e108f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement_toUserId_idx_397e108f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"settlement_toUserId_idx_397e108f\"",
+        "sql": "CREATE INDEX \"settlement_toUserId_idx_397e108f\" ON \"public\".\"settlement\" (\"toUserId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"settlement_toUserId_idx_397e108f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"settlement_toUserId_idx_397e108f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.settlement.settlement_groupId_fkey",
+    "label": "Add foreign key \"settlement_groupId_fkey\" on \"settlement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "settlement_groupId_fkey",
+        "table": "settlement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"settlement_groupId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "settlement_groupId_fkey",
+          "public",
+          "\"public\".\"settlement\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"settlement_groupId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"settlement\"\nADD CONSTRAINT \"settlement_groupId_fkey\"\nFOREIGN KEY (\"groupId\")\nREFERENCES \"public\".\"groups\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"settlement_groupId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "settlement_groupId_fkey",
+          "public",
+          "\"public\".\"settlement\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.settlement.settlement_fromUserId_fkey",
+    "label": "Add foreign key \"settlement_fromUserId_fkey\" on \"settlement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "settlement_fromUserId_fkey",
+        "table": "settlement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"settlement_fromUserId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "settlement_fromUserId_fkey",
+          "public",
+          "\"public\".\"settlement\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"settlement_fromUserId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"settlement\"\nADD CONSTRAINT \"settlement_fromUserId_fkey\"\nFOREIGN KEY (\"fromUserId\")\nREFERENCES \"public\".\"users\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"settlement_fromUserId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "settlement_fromUserId_fkey",
+          "public",
+          "\"public\".\"settlement\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.settlement.settlement_toUserId_fkey",
+    "label": "Add foreign key \"settlement_toUserId_fkey\" on \"settlement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "settlement_toUserId_fkey",
+        "table": "settlement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"settlement_toUserId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "settlement_toUserId_fkey",
+          "public",
+          "\"public\".\"settlement\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"settlement_toUserId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"settlement\"\nADD CONSTRAINT \"settlement_toUserId_fkey\"\nFOREIGN KEY (\"toUserId\")\nREFERENCES \"public\".\"users\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"settlement_toUserId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "settlement_toUserId_fkey",
+          "public",
+          "\"public\".\"settlement\""
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "dropTable.group_members",
+    "label": "Drop table \"group_members\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "group_members"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"group_members\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"group_members\"",
+        "sql": "DROP TABLE \"public\".\"group_members\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"group_members\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members\""
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,203 @@
+[
+  {
+    "id": "table.group_members",
+    "label": "Create table \"group_members\"",
+    "summary": "Creates table \"group_members\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "group_members"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"group_members\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"group_members\"",
+        "sql": "CREATE TABLE \"public\".\"group_members\" (\n  \"groupId\" int4 NOT NULL,\n  \"joinedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"role\" text NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"groupId\", \"userId\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"group_members\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.group_members.group_members_groupId_idx_e2fb5578",
+    "label": "Create index \"group_members_groupId_idx_e2fb5578\" on \"group_members\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "group_members_groupId_idx_e2fb5578",
+        "table": "group_members"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"group_members_groupId_idx_e2fb5578\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members_groupId_idx_e2fb5578\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"group_members_groupId_idx_e2fb5578\"",
+        "sql": "CREATE INDEX \"group_members_groupId_idx_e2fb5578\" ON \"public\".\"group_members\" (\"groupId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"group_members_groupId_idx_e2fb5578\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members_groupId_idx_e2fb5578\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.group_members.group_members_userId_idx_a489d58a",
+    "label": "Create index \"group_members_userId_idx_a489d58a\" on \"group_members\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "group_members_userId_idx_a489d58a",
+        "table": "group_members"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"group_members_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"group_members_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"group_members_userId_idx_a489d58a\" ON \"public\".\"group_members\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"group_members_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"group_members_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.group_members.group_members_groupId_fkey",
+    "label": "Add foreign key \"group_members_groupId_fkey\" on \"group_members\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "group_members_groupId_fkey",
+        "table": "group_members"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"group_members_groupId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "group_members_groupId_fkey",
+          "public",
+          "\"public\".\"group_members\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"group_members_groupId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"group_members\"\nADD CONSTRAINT \"group_members_groupId_fkey\"\nFOREIGN KEY (\"groupId\")\nREFERENCES \"public\".\"groups\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"group_members_groupId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "group_members_groupId_fkey",
+          "public",
+          "\"public\".\"group_members\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.group_members.group_members_userId_fkey",
+    "label": "Add foreign key \"group_members_userId_fkey\" on \"group_members\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "group_members_userId_fkey",
+        "table": "group_members"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"group_members_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "group_members_userId_fkey",
+          "public",
+          "\"public\".\"group_members\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"group_members_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"group_members\"\nADD CONSTRAINT \"group_members_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"users\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"group_members_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "group_members_userId_fkey",
+          "public",
+          "\"public\".\"group_members\""
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,135 @@
+// use prisma-8
+model User {
+  id                  Int                        @id @default(autoincrement())
+  email               String                     @unique
+  username            String                     @unique
+  name                String
+  passwordHash        String
+  createdAt           TimestamptzString          @default(now())
+  updatedAt           temporal.updatedAtString()
+
+  groupMembers        GroupMember[]
+  expensesPaid        Expense[]
+  splits              ExpenseSplit[]
+  settlementsSent     Settlement[]               @relation("SettlementFrom")
+  settlementsReceived Settlement[]               @relation("SettlementTo")
+  createdGroups       Group[]                    @relation("GroupCreater")
+
+  @@map("users")
+}
+
+model Group {
+  id          Int                        @id @default(autoincrement())
+  name        String
+  createdAt   TimestamptzString          @default(now())
+  updatedAt   temporal.updatedAtString()
+  isDeleted   Boolean                    @default(false)
+  deletedAt   TimestamptzString?
+
+  createdById Int
+  createdBy   User                       @relation("GroupCreater", fields:[createdById], references:[id], onDelete: Restrict)
+
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
+
+  @@index([createdById])
+  @@map("groups")
+}
+
+model GroupMember {
+  id       Int               @id @default(autoincrement())
+  groupId  Int
+  userId   Int
+  role     String
+  joinedAt TimestamptzString @default(now())
+
+  group    Group             @relation(fields:[groupId], references:[id], onDelete: Cascade)
+  user     User              @relation(fields:[userId], references:[id], onDelete: Cascade)
+
+  // A user can have only one membership record per group.
+  @@unique([groupId, userId])
+
+  @@index([userId])
+  @@map("group_members")
+}
+
+model Expense {
+  id          Int               @id @default(autoincrement())
+  groupId     Int
+  paidBy      Int
+  amount      Int
+  description String?
+  createdAt   TimestamptzString @default(now())
+  is_deleted  Boolean           @default(false) @map("is_deleted")
+
+  group       Group             @relation(fields:[groupId], references:[id], onDelete: Restrict)
+  payer       User              @relation(fields:[paidBy], references:[id], onDelete: Restrict)
+
+  splits      ExpenseSplit[]
+
+  @@index([groupId])
+  @@index([paidBy])
+  @@map("expenses")
+}
+
+model ExpenseSplit {
+  id         Int     @id @default(autoincrement())
+  expenseId  Int
+  userId     Int
+  amount     Int
+  is_deleted Boolean @default(false) @map("is_deleted")
+
+  expense    Expense @relation(fields:[expenseId], references:[id], onDelete: Cascade)
+  user       User    @relation(fields:[userId], references:[id], onDelete: Restrict)
+
+  @@index([expenseId])
+  @@index([userId])
+  @@map("expense_splits")
+}
+
+model Settlement {
+  id         Int               @id @default(autoincrement())
+  groupId    Int
+  fromUserId Int
+  toUserId   Int
+  amount     Int
+  createdAt  TimestamptzString @default(now())
+  is_deleted Boolean           @default(false) @map("is_deleted")
+
+  group      Group             @relation(fields:[groupId], references:[id], onDelete: Restrict)
+  from       User              @relation("SettlementFrom", fields:[fromUserId], references:[id], onDelete: Restrict)
+  to         User              @relation("SettlementTo", fields:[toUserId], references:[id], onDelete: Restrict)
+
+  @@index([groupId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@map("settlement")
+}
+
+model Conversation {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  title     String            @default("New Chat")
+  isActive  Boolean           @default(true)
+  createdAt TimestamptzString @default(now())
+
+  user      User              @relation(fields:[userId], references:[id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int               @id @default(autoincrement())
+  conversationId Int
+  role           String
+  content        String
+  createdAt      TimestamptzString @default(now())
+
+  conversation   Conversation      @relation(fields:[conversationId], references:[id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("messages")
+}

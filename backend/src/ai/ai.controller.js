@@ -24,8 +24,8 @@ export async function chatController(req, res, next) {
         message: "Invalid conversation format",
       });
     }
-
-    const response = await generateAIResponse(messages);
+   const userId=req.user.id;
+    const response = await generateAIResponse(messages,userId);
 
     return res.status(200).json({
       response,

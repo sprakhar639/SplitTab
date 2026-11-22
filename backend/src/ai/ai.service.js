@@ -1,13 +1,14 @@
 import OpenAI from "openai";
 import { AI_CONFIG } from "./ai.config.js";
 import { aiTools } from "./ai.tools.js";
+import { executeTool } from "./ai.toolExecutor.js";
 
 const client = new OpenAI({
   baseURL: AI_CONFIG.BASE_URL,
   apiKey: "ollama",
 });
 
-export async function generateAIResponse(conversation) {
+export async function generateAIResponse(conversation, userId) {
   const messages = [
     {
       role: "system",
@@ -40,13 +41,7 @@ For example:
     ...conversation,
   ];
 
-  // DEBUG
-  console.log("========== MESSAGES ==========");
-  console.log(JSON.stringify(messages, null, 2));
-
-  console.log("========== TOOLS ==========");
-  console.log(JSON.stringify(aiTools, null, 2));
-
+  console.time("LLM First Call");
   const response = await client.chat.completions.create({
     model: AI_CONFIG.MODEL,
     messages,
@@ -54,8 +49,37 @@ For example:
     tool_choice: "auto",
   });
 
-  console.log("========== RESPONSE ==========");
-  console.log(JSON.stringify(response, null, 2));
+  console.timeEnd("LLM First Call");
+  const assistantMessage = response.choices[0].message;
 
-  return response.choices[0].message.content;
+  if (!assistantMessage.tool_calls) {
+    return assistantMessage.content;
+  }
+
+  const toolCall = assistantMessage.tool_calls[0];
+
+  const toolName = toolCall.function.name;
+  const toolArgs = JSON.parse(toolCall.function.arguments);
+
+  console.time("Tool Execution");
+  const toolResult = await executeTool(toolName, toolArgs, userId);
+  console.timeEnd("Tool Execution");
+  messages.push(assistantMessage);
+
+  messages.push({
+    role: "tool",
+    tool_call_id: toolCall.id,
+    content: JSON.stringify(toolResult),
+  });
+  console.time("LLM Second Call");
+  const finalResponse = await client.chat.completions.create({
+    model: AI_CONFIG.MODEL,
+    messages,
+  });
+  console.timeEnd("LLM Second Call");
+  return finalResponse.choices[0].message.content;
+
+  console.log("Tool result:", toolResult);
+
+  return JSON.stringify(toolResult);
 }

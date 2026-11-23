@@ -48,6 +48,13 @@ export default function Assistant() {
 
       // Store the conversation ID returned by the backend.
       setConversationId(result.conversationId);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: result.message.content,
+        },
+      ]);
     } catch (err) {
       setError(err.message);
 
@@ -59,7 +66,6 @@ export default function Assistant() {
         },
       ]);
     } finally {
-
       setThinking(false);
     }
   }

@@ -1,6 +1,6 @@
 import { getAllExpenses } from "../expenses/expense.service";
 import { getSettlements } from "../settlements/settlement.service";
-import { sendAIMessage } from "../../services/aiApi.js";
+import api from "../../services/api.js";
 
 // Loads SplitTab data for the current user.
 export async function getAssistantContext(myId) {
@@ -21,11 +21,14 @@ export async function getAssistantContext(myId) {
   return { myId, groups, expenses, settlements, people };
 }
 
-// Sends the user's message to the real AI backend.
-export async function askAssistant(messages) {
-  const data = await sendAIMessage(messages);
+// Sends the user's message to the backend.
+export async function askAssistant(content, conversationId = null) {
+  const data = conversationId
+    ? await api.post(`/messages/${conversationId}`, { content })
+    : await api.post("/messages", { content });
 
   return {
-    text: data.response,
+    conversationId: data.conversationId,
+    message: data.data,
   };
 }

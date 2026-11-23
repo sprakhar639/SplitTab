@@ -14,6 +14,7 @@ model User {
   settlementsSent     Settlement[]               @relation("SettlementFrom")
   settlementsReceived Settlement[]               @relation("SettlementTo")
   createdGroups       Group[]                    @relation("GroupCreater")
+  conversations       Conversation[]
 
   @@map("users")
 }
@@ -113,6 +114,7 @@ model Conversation {
   title     String            @default("New Chat")
   isActive  Boolean           @default(true)
   createdAt TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
 
   user      User              @relation(fields:[userId], references:[id], onDelete: Cascade)
   messages  Message[]

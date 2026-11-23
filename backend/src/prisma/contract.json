@@ -71,6 +71,13 @@
                   "kind": "scalar"
                 }
               },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "userId": {
                 "nullable": false,
                 "type": {
@@ -125,6 +132,9 @@
                 },
                 "title": {
                   "column": "title"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
                 },
                 "userId": {
                   "column": "userId"
@@ -855,6 +865,21 @@
               }
             },
             "relations": {
+              "conversations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Conversation",
+                  "namespace": "public"
+                }
+              },
               "createdGroups": {
                 "cardinality": "1:N",
                 "on": {
@@ -1019,6 +1044,11 @@
                     "value": "New Chat"
                   },
                   "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "userId": {
@@ -1741,12 +1771,27 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "f46045a303d0b139ece12174a1c1c371626c9e275441e95563eed62d05a1351d"
+    "storageHash": "4575d38f93e7cb53876cb4a3060fc1e0045c960170499f944633a77e6fd5bf17"
   },
   "execution": {
-    "executionHash": "8ab922e6a9a536f0e1e59bb344fa0a15110d99153831ec0a0d7c06cc479f6b70",
+    "executionHash": "0d7eed3a21d4ce96d3bbbf0a4c1b7dd6a1bb2167e123108231495856c0cf58bf",
     "mutations": {
       "defaults": [
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "conversations"
+          }
+        },
         {
           "onCreate": {
             "id": "timestampNow",

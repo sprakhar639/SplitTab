@@ -8,6 +8,7 @@ import settlementRoute from "./features/settlements/settlement.route.js";
 import userRoute from "./features/users/user.route.js";
 import aiRoute from "./ai/ai.route.js";
 import convoRoute from "./features/messaging/conversation/conversation.route.js";
+import messageRoute from "./features/messaging/messages/message.route.js"
 import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api/settlements", settlementRoute);
 app.use("/api/users", userRoute);
 app.use("/api/ai", aiRoute);
 app.use("/api/conversations", convoRoute);
+app.use("/api/messages",messageRoute)
 app.use(errorMiddleware);
 
 export default app;

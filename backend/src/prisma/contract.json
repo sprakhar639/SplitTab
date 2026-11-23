@@ -64,13 +64,6 @@
                   "kind": "scalar"
                 }
               },
-              "title": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -129,9 +122,6 @@
                 },
                 "isActive": {
                   "column": "isActive"
-                },
-                "title": {
-                  "column": "title"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -1037,15 +1027,6 @@
                   "nativeType": "bool",
                   "nullable": false
                 },
-                "title": {
-                  "codecId": "pg/text@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": "New Chat"
-                  },
-                  "nativeType": "text",
-                  "nullable": false
-                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
@@ -1771,7 +1752,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4575d38f93e7cb53876cb4a3060fc1e0045c960170499f944633a77e6fd5bf17"
+    "storageHash": "7970e33787b5563ad47a478de077b83f94035019e05b5bd3a4f8f8faed913a84"
   },
   "execution": {
     "executionHash": "0d7eed3a21d4ce96d3bbbf0a4c1b7dd6a1bb2167e123108231495856c0cf58bf",

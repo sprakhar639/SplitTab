@@ -10,6 +10,7 @@
     "test:integration": "vitest run --project integration",
     "emit": "prisma contract emit",
     "dev": "nodemon server.js",
+    "start": "node server.js",
     "migration": "prisma migration plan --name",
     "migrate": "prisma db migrate --advance-ref db",
     "seed": "node seed.js"

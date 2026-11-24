@@ -1,17 +1,29 @@
-import Redis from 'ioredis'
+import Redis from "ioredis";
 
-const redis= new Redis({
-    host:"127.0.0.1",
-    port:6379,
-})
+const redisUrl = process.env.REDIS_URL;
 
-redis.on("connect",()=>{
-    console.log("Redis connected successfully");
-})
+const redis = redisUrl
+  ? new Redis(redisUrl, {
+      maxRetriesPerRequest: 3,
+      retryStrategy(times) {
+        return Math.min(times * 500, 5000);
+      },
+    })
+  : new Redis({
+      host: process.env.REDIS_HOST || "127.0.0.1",
+      port: Number(process.env.REDIS_PORT || 6379),
+      maxRetriesPerRequest: 3,
+      retryStrategy(times) {
+        return Math.min(times * 500, 5000);
+      },
+    });
 
-redis.on("error",(error)=>{
-    console.error("Redis connected error:",error.message);
-})
+redis.on("connect", () => {
+  console.log("Redis connected successfully");
+});
 
+redis.on("error", (error) => {
+  console.error("Redis connection error:", error.message);
+});
 
 export default redis;

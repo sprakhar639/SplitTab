@@ -1,16 +1,29 @@
-import { register, login, logout, getCurrentUser } from "./auth.service.js";
+import {
+  register,
+  login,
+  logout,
+  getCurrentUser,
+} from "./auth.service.js";
+
+const isProduction = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: "/",
+};
 
 async function userRegister(req, res, next) {
   try {
     const sessionToken = await register(req.body);
 
-    res.cookie("sessionId", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+    res.cookie("sessionId", sessionToken, cookieOptions);
+
+    return res.status(201).json({
+      message: "Registered Successfully",
     });
-    res.status(201).json({ message: "Registed Successfully" });
   } catch (error) {
     next(error);
   }
@@ -20,13 +33,11 @@ async function userLogin(req, res, next) {
   try {
     const sessionToken = await login(req.body);
 
-    res.cookie("sessionId", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+    res.cookie("sessionId", sessionToken, cookieOptions);
+
+    return res.status(200).json({
+      message: "Logged In Successfully",
     });
-    res.status(200).json({ message: "LoggedIn Successfully" });
   } catch (error) {
     next(error);
   }
@@ -35,9 +46,19 @@ async function userLogin(req, res, next) {
 async function userLogout(req, res, next) {
   try {
     const sessionId = req.cookies.sessionId;
+
     await logout(sessionId);
-    res.clearCookie("sessionId");
-    return res.status(200).json({ message: "LogOut Successfully" });
+
+    res.clearCookie("sessionId", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
+
+    return res.status(200).json({
+      message: "Logged Out Successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -58,4 +79,9 @@ async function currentUserController(req, res, next) {
   }
 }
 
-export { userRegister, userLogin, userLogout, currentUserController };
+export {
+  userRegister,
+  userLogin,
+  userLogout,
+  currentUserController,
+};

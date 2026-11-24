@@ -32,3 +32,10 @@ export async function askAssistant(content, conversationId = null) {
     message: data.data,
   };
 }
+
+// Retrieves saved messages for a conversation.
+export async function getMessages(conversationId) {
+  const data = await api.get(`/messages/${conversationId}`);
+
+  return data.data;
+}

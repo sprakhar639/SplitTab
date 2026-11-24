@@ -3,7 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import Loader from "../../../shared/components/Loader";
 import { SUGGESTED_QUESTIONS } from "../../../services/mockAssistant";
-import { askAssistant, getAssistantContext } from "../assistant.service";
+import {
+  askAssistant,
+  getAssistantContext,
+  getMessages,
+} from "../assistant.service";
 import ChatMessage from "../components/ChatMessage";
 
 export default function Assistant() {
@@ -16,17 +20,70 @@ export default function Assistant() {
   const [conversationId, setConversationId] = useState(null);
   const [draft, setDraft] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [restoring, setRestoring] = useState(true);
 
   const endRef = useRef(null);
 
+  // Load SplitTab context.
   useEffect(() => {
+    if (!myId) return;
+
     getAssistantContext(myId)
       .then(setContext)
       .catch((err) => setError(err.message));
   }, [myId]);
 
+  // Restore saved conversation after refresh.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (!myId) return;
+
+    let cancelled = false;
+
+    async function restoreConversation() {
+      try {
+        const savedConversationId = localStorage.getItem(
+          `splittab_conversation_${myId}`,
+        );
+
+        if (!savedConversationId) return;
+
+        const result = await getMessages(savedConversationId);
+
+        if (cancelled) return;
+
+        setConversationId(Number(savedConversationId));
+
+        setMessages(
+          result.map((message) => ({
+            role: message.role,
+            text: message.content,
+          })),
+        );
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to restore conversation:", err);
+          setError("Failed to restore your previous conversation.");
+        }
+      } finally {
+        if (!cancelled) {
+          setRestoring(false);
+        }
+      }
+    }
+
+    restoreConversation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [myId]);
+
+  // Auto-scroll to the latest message.
+  useEffect(() => {
+    endRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }, [messages, thinking]);
 
   async function ask(question) {
@@ -43,11 +100,17 @@ export default function Assistant() {
     setThinking(true);
 
     try {
-      // Send only the current message.
       const result = await askAssistant(text, conversationId);
 
-      // Store the conversation ID returned by the backend.
+      // Save conversation ID.
       setConversationId(result.conversationId);
+
+      localStorage.setItem(
+        `splittab_conversation_${myId}`,
+        result.conversationId,
+      );
+
+      // Display AI response.
       setMessages((prev) => [
         ...prev,
         {
@@ -82,7 +145,10 @@ export default function Assistant() {
     }
   }
 
+  // Start a completely new conversation.
   function handleNewChat() {
+    localStorage.removeItem(`splittab_conversation_${myId}`);
+
     setMessages([]);
     setConversationId(null);
     setError("");
@@ -119,8 +185,8 @@ export default function Assistant() {
           </p>
         )}
 
-        {!context ? (
-          <Loader label="Reading your expenses…" />
+        {!context || restoring ? (
+          <Loader label="Loading your conversation…" />
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-start gap-4 rounded-xl border border-line bg-white p-6">
             <span className="grid size-10 place-items-center rounded-full bg-lime text-sm font-extrabold text-deep">
@@ -188,13 +254,13 @@ export default function Assistant() {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask Munshi AI..."
-          disabled={!context || thinking}
+          disabled={!context || thinking || restoring}
           className="max-h-32 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-mute/70"
         />
 
         <button
           type="submit"
-          disabled={!draft.trim() || thinking || !context}
+          disabled={!draft.trim() || thinking || !context || restoring}
           className="rounded-xl bg-deep px-4 py-2 text-sm font-bold text-white transition hover:bg-deep-2 disabled:opacity-40"
         >
           Ask

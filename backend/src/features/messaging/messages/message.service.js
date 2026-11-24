@@ -15,10 +15,7 @@ async function createMessage({ conversationId, userId, content }) {
 
       // Deactivate previous active conversations
       await Conversation.where((conversation) =>
-        and(
-          conversation.userId.eq(userId),
-          conversation.isActive.eq(true),
-        ),
+        and(conversation.userId.eq(userId), conversation.isActive.eq(true)),
       ).updateAll({
         isActive: false,
       });
@@ -94,4 +91,27 @@ async function createMessage({ conversationId, userId, content }) {
   };
 }
 
-export { createMessage };
+async function getMessages({ conversationId, userId }) {
+  if (!conversationId) {
+    throw new AppError("Conversation ID is required", 400);
+  }
+
+  const { Message, Conversation } = db.orm.public;
+
+  const conversation = await Conversation.where((convo) =>
+    and(convo.id.eq(conversationId), convo.userId.eq(userId)),
+  ).first();
+
+  if (!conversation) {
+    throw new AppError("Conversation not found", 404);
+  }
+
+  const messages = await Message.where((message) =>
+    and(message.conversationId.eq(conversationId)),
+  ).all();
+
+  return messages;
+  
+}
+
+export { createMessage, getMessages };

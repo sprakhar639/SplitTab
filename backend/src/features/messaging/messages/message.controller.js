@@ -1,4 +1,4 @@
-import { createMessage } from "./message.service.js";
+import { createMessage, getMessages } from "./message.service.js";
 
 async function createMessageController(req, res, next) {
   try {
@@ -22,4 +22,17 @@ async function createMessageController(req, res, next) {
   }
 }
 
-export { createMessageController };
+async function getMessageController(req, res, next) {
+  try {
+    const conversationId = Number(req.params.conversationId);
+    const userId = Number(req.user.id);
+    const result = await getMessages({ conversationId, userId });
+    return res
+      .status(200)
+      .json({ message: "Messages retrieved successfully", data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export { createMessageController, getMessageController };

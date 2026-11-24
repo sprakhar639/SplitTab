@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createMessageController } from "./message.controller.js";
+import { createMessageController,getMessageController } from "./message.controller.js";
 import authMiddleware from "../../../middleware/auth.middleware.js";
 
 const router = Router();
@@ -9,5 +9,7 @@ router.post("/", authMiddleware, createMessageController);
 
 // Subsequent messages — conversation ID already exists
 router.post("/:conversationId", authMiddleware, createMessageController);
+
+router.get("/:conversationId",authMiddleware,getMessageController)
 
 export default router;

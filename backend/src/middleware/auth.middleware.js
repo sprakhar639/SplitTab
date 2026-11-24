@@ -13,7 +13,7 @@ async function authMiddleware(req, res, next) {
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    const storedUserId = await redis.get(`session:${tokenHash}`);
+    const storedUserId = await redis.get(`splittab:session:${tokenHash}`);
 
     if (!storedUserId) {
       return res.status(401).json({ message: "Session Not Found" });

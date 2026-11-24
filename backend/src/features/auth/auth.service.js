@@ -117,7 +117,7 @@ async function logout(sessionId) {
 
   const tokenHash = hashSessionToken(sessionId);
 
-  await redis.del(`session:${tokenHash}`);
+  await redis.del(`splittab:session:${tokenHash}`);
 }
 
 // CREATE SESSION
@@ -129,7 +129,7 @@ async function createSession(userId) {
   const tokenHash = hashSessionToken(sessionToken);
 
   await redis.set(
-    `session:${tokenHash}`,
+    `splittab:session:${tokenHash}`,
     String(userId),
     "EX",
     SESSION_DURATION,

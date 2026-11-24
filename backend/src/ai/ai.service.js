@@ -5,7 +5,7 @@ import { executeTool } from "./ai.toolExecutor.js";
 
 const client = new OpenAI({
   baseURL: AI_CONFIG.BASE_URL,
-  apiKey: "ollama",
+  apiKey: process.env.OLLAMA_API_KEY,
 });
 
 export async function generateAIResponse(conversation, userId) {

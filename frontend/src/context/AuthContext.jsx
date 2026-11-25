@@ -10,6 +10,13 @@ import * as authService from "../features/auth/services/auth.service";
 
 const AuthContext = createContext(null);
 
+// Clear the active Munshi AI conversation for a user.
+function clearAssistantConversation(userId) {
+  if (!userId) return;
+
+  localStorage.removeItem(`splittab_conversation_${userId}`);
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(undefined);
 
@@ -20,9 +27,16 @@ export function AuthProvider({ children }) {
       .catch(() => setUser(null));
   }, []);
 
+  // Handle unauthorized sessions.
   useEffect(() => {
     function handleUnauthorized() {
-      setUser(null);
+      setUser((currentUser) => {
+        if (currentUser) {
+          clearAssistantConversation(currentUser.id);
+        }
+
+        return null;
+      });
     }
 
     window.addEventListener("auth:unauthorized", handleUnauthorized);
@@ -31,25 +45,42 @@ export function AuthProvider({ children }) {
       window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, []);
 
+  // LOGIN
   const login = useCallback(async (credentials) => {
     await authService.loginUser(credentials);
-    setUser(await authService.fetchCurrentUser());
+
+    const loggedInUser = await authService.fetchCurrentUser();
+
+    // Remove any stale conversation from a previous session.
+    clearAssistantConversation(loggedInUser.id);
+
+    setUser(loggedInUser);
   }, []);
 
+  // REGISTER
   const register = useCallback(async (userData) => {
     await authService.registerUser(userData);
-    setUser(await authService.fetchCurrentUser());
+
+    const registeredUser = await authService.fetchCurrentUser();
+
+    clearAssistantConversation(registeredUser.id);
+
+    setUser(registeredUser);
   }, []);
 
+  // LOGOUT
   const logout = useCallback(async () => {
+    const currentUserId = user?.id;
+
     try {
       await authService.logoutUser();
     } finally {
+      clearAssistantConversation(currentUserId);
       setUser(null);
     }
-  }, []);
+  }, [user]);
 
-  // Update authenticated user with data returned by the backend.
+  // UPDATE USER
   const updateUser = useCallback((updatedUser) => {
     setUser((prev) => (prev ? { ...prev, ...updatedUser } : prev));
   }, []);

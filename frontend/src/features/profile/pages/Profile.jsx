@@ -258,8 +258,6 @@ function PasswordForm() {
         <h2 className="text-base font-extrabold cursor-default select-none">
           Password
         </h2>
-
-        <p className="text-sm text-mute">Use at least 8 characters.</p>
       </div>
 
       <Input

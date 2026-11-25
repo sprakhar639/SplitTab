@@ -17,15 +17,12 @@ export default function Register() {
     username: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -75,12 +72,6 @@ export default function Register() {
       newErrors.password = "Password must contain at least 8 characters";
     }
 
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
     return newErrors;
   }
 
@@ -90,9 +81,7 @@ export default function Register() {
     const validationErrors = validate();
     setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) {
-      return;
-    }
+    if (Object.keys(validationErrors).length > 0) return;
 
     try {
       setLoading(true);
@@ -120,17 +109,23 @@ export default function Register() {
       <section className="auth-form-section">
         <div className="auth-container register-container">
           <div className="auth-heading">
-            <span className="form-tag">GET STARTED</span>
+            <span className="form-tag cursor-default select-none">
+              GET STARTED
+            </span>
 
-            <h2>Create your account</h2>
+            <h2 className="cursor-default select-none">Create your account</h2>
 
-            <p>Start managing shared expenses with friends.</p>
+            <p className="cursor-default select-none">
+              Start managing shared expenses with friends.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate autoComplete="off">
             {/* Full Name */}
             <div className="auth-field">
-              <label htmlFor="name">Full name</label>
+              <label htmlFor="name" className="cursor-default select-none">
+                Full name
+              </label>
 
               <input
                 id="name"
@@ -140,17 +135,23 @@ export default function Register() {
                 onChange={handleChange}
                 placeholder="Enter your full name"
                 autoComplete="name"
-                className={errors.name ? "input-error" : ""}
+                className={`cursor-text select-text ${
+                  errors.name ? "input-error" : ""
+                }`}
               />
 
               {errors.name && (
-                <span className="field-error">{errors.name}</span>
+                <span className="field-error cursor-default select-none">
+                  {errors.name}
+                </span>
               )}
             </div>
 
             {/* Username */}
             <div className="auth-field">
-              <label htmlFor="username">Username</label>
+              <label htmlFor="username" className="cursor-default select-none">
+                Username
+              </label>
 
               <input
                 id="username"
@@ -159,18 +160,25 @@ export default function Register() {
                 value={formData.username}
                 onChange={handleChange}
                 placeholder="Choose a username"
-                autoComplete="username"
-                className={errors.username ? "input-error" : ""}
+                autoComplete="off"
+                spellCheck="false"
+                className={`cursor-text select-text ${
+                  errors.username ? "input-error" : ""
+                }`}
               />
 
               {errors.username && (
-                <span className="field-error">{errors.username}</span>
+                <span className="field-error cursor-default select-none">
+                  {errors.username}
+                </span>
               )}
             </div>
 
             {/* Email */}
             <div className="auth-field">
-              <label htmlFor="email">Email address</label>
+              <label htmlFor="email" className="cursor-default select-none">
+                Email address
+              </label>
 
               <input
                 id="email"
@@ -180,17 +188,23 @@ export default function Register() {
                 onChange={handleChange}
                 placeholder="you@gmail.com"
                 autoComplete="email"
-                className={errors.email ? "input-error" : ""}
+                className={`cursor-text select-text ${
+                  errors.email ? "input-error" : ""
+                }`}
               />
 
               {errors.email && (
-                <span className="field-error">{errors.email}</span>
+                <span className="field-error cursor-default select-none">
+                  {errors.email}
+                </span>
               )}
             </div>
 
             {/* Password */}
             <div className="auth-field">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password" className="cursor-default select-none">
+                Password
+              </label>
 
               <div className="password-wrapper">
                 <input
@@ -201,12 +215,14 @@ export default function Register() {
                   onChange={handleChange}
                   placeholder="Create a password"
                   autoComplete="new-password"
-                  className={errors.password ? "input-error" : ""}
+                  className={`cursor-text select-text ${
+                    errors.password ? "input-error" : ""
+                  }`}
                 />
 
                 <button
                   type="button"
-                  className="password-toggle"
+                  className="password-toggle cursor-pointer"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? "Hide" : "Show"}
@@ -214,72 +230,72 @@ export default function Register() {
               </div>
 
               {errors.password && (
-                <span className="field-error">{errors.password}</span>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="auth-field">
-              <label htmlFor="confirmPassword">Confirm password</label>
-
-              <div className="password-wrapper">
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm your password"
-                  autoComplete="new-password"
-                  className={errors.confirmPassword ? "input-error" : ""}
-                />
-
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                >
-                  {showConfirmPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-
-              {errors.confirmPassword && (
-                <span className="field-error">{errors.confirmPassword}</span>
+                <span className="field-error cursor-default select-none">
+                  {errors.password}
+                </span>
               )}
             </div>
 
             {/* Backend Error */}
-            {serverError && <p className="field-error">{serverError}</p>}
+            {serverError && (
+              <p
+                className="field-error cursor-default select-none"
+                role="alert"
+              >
+                {serverError}
+              </p>
+            )}
 
             {/* Submit */}
-            <button type="submit" className="auth-submit" disabled={loading}>
+            <button
+              type="submit"
+              className="auth-submit cursor-pointer"
+              disabled={loading}
+            >
               {loading ? "Creating account..." : "Create account"}
               {!loading && <span>→</span>}
             </button>
           </form>
 
-          <div className="auth-divider">
+          {/* Social Signup */}
+          <div className="auth-divider cursor-default select-none">
             <span />
             or continue with
             <span />
           </div>
 
           <div className="social-buttons">
-            <button type="button" aria-label="Google signup">
+            <button
+              type="button"
+              className="cursor-pointer"
+              aria-label="Google signup"
+            >
               G
             </button>
 
-            <button type="button" aria-label="GitHub signup">
+            {/* <button
+              type="button"
+              className="cursor-pointer"
+              aria-label="GitHub signup"
+            >
               GH
             </button>
 
-            <button type="button" aria-label="LinkedIn signup">
+            <button
+              type="button"
+              className="cursor-pointer"
+              aria-label="LinkedIn signup"
+            >
               in
-            </button>
+            </button> */}
           </div>
 
-          <div className="auth-footer">
-            Already have an account? <Link to="/login">Login</Link>
+          {/* Footer */}
+          <div className="auth-footer cursor-default select-none">
+            Already have an account?{" "}
+            <Link to="/login" className="cursor-pointer">
+              Login
+            </Link>
           </div>
         </div>
       </section>

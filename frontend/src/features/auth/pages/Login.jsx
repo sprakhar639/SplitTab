@@ -154,7 +154,13 @@ export default function Login() {
             {errors.form && <span className="field-error">{errors.form}</span>}
 
             <button type="submit" className="auth-submit" disabled={submitting}>
-              {submitting ? "Logging in…" : <>Login <span>→</span></>}
+              {submitting ? (
+                "Logging in…"
+              ) : (
+                <>
+                  Login <span>→</span>
+                </>
+              )}
             </button>
           </form>
 
@@ -165,9 +171,11 @@ export default function Login() {
           </div>
 
           <div className="social-buttons">
-            <button type="button" aria-label="Google login">G</button>
-            <button type="button" aria-label="GitHub login">GH</button>
-            <button type="button" aria-label="LinkedIn login">in</button>
+            <button type="button" aria-label="Google login">
+              G
+            </button>
+            {/* <button type="button" aria-label="GitHub login">GH</button>
+            <button type="button" aria-label="LinkedIn login">in</button> */}
           </div>
 
           <div className="auth-footer">

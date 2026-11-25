@@ -69,7 +69,7 @@ function rangeStart(range) {
 function sectionKey(expense, groupBy, myId) {
   if (groupBy === "group") return expense.group.name;
   if (groupBy === "payer")
-    return memberName(expense.members, expense.paidBy, myId);
+    return memberName(expense.members, expense.paidBy.id, myId);
   if (groupBy === "date")
     return formatDate(expense.createdAt, { weekday: "short" });
   return "All expenses";
@@ -127,7 +127,7 @@ export default function Expenses() {
 
   if (error) {
     return (
-      <p className="rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-danger">
+      <p className="cursor-default select-none rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-danger">
         {error}
       </p>
     );
@@ -183,9 +183,9 @@ export default function Expenses() {
   );
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="cursor-default select-none flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Expenses</h1>
+        <h1 className="cursor-default select-none text-2xl font-extrabold tracking-tight">Expenses</h1>
         <p className="text-sm text-mute">Every expense across your groups</p>
       </div>
 

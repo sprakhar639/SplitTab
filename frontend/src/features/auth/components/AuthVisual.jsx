@@ -74,20 +74,22 @@ export default function AuthVisual({ variant = "login" }) {
 
   return (
     <>
-      <div className="auth-brand">
+      {/* Brand */}
+      <div className="auth-brand cursor-default select-none">
         <span className="brand-icon">₹</span>
         <span>SplitTab</span>
       </div>
 
+      {/* Features */}
       <aside className="auth-features">
         <div className="feature-intro">
-          <span className="feature-eyebrow">
+          <span className="feature-eyebrow cursor-default select-none">
             {isLogin
               ? "SHARED EXPENSES, SIMPLIFIED"
               : "GET STARTED WITH SPLITTAB"}
           </span>
 
-          <h1>
+          <h1 className="cursor-default select-none">
             {isLogin ? (
               <>
                 Manage groups,
@@ -111,33 +113,40 @@ export default function AuthVisual({ variant = "login" }) {
         <div className="feature-list">
           {features.map((feature) => (
             <div className="feature-item" key={feature.title}>
-              <div className="feature-icon">{feature.icon}</div>
+              <div className="feature-icon cursor-default select-none">
+                {feature.icon}
+              </div>
 
               <div>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
+                <h3 className="cursor-default select-none">{feature.title}</h3>
+
+                <p className="cursor-default select-none">
+                  {feature.description}
+                </p>
               </div>
             </div>
           ))}
         </div>
       </aside>
 
+      {/* Preview */}
       <aside className="auth-preview">
         <div className="preview-back preview-back-one" />
         <div className="preview-back preview-back-two" />
 
         <div className="preview-card" key={activeSlide}>
           <div className="preview-header">
-            <div className="preview-group-icon">
+            <div className="preview-group-icon cursor-default select-none">
               {activeSlide === 0 ? "♧" : activeSlide === 1 ? "▤" : "↗"}
             </div>
 
             <div>
-              <h3>{slide.title}</h3>
-              <p>{slide.subtitle}</p>
+              <h3 className="cursor-default select-none">{slide.title}</h3>
+
+              <p className="cursor-default select-none">{slide.subtitle}</p>
             </div>
 
-            <span className="preview-menu">⋮</span>
+            <span className="preview-menu cursor-default select-none">⋮</span>
           </div>
 
           <div className="preview-divider" />
@@ -145,9 +154,15 @@ export default function AuthVisual({ variant = "login" }) {
           <div className="expense-list">
             {slide.rows.map(([icon, name, value]) => (
               <div className="expense-item" key={name}>
-                <span className="expense-icon">{icon}</span>
-                <span className="expense-name">{name}</span>
-                <strong>{value}</strong>
+                <span className="expense-icon cursor-default select-none">
+                  {icon}
+                </span>
+
+                <span className="expense-name cursor-default select-none">
+                  {name}
+                </span>
+
+                <strong className="cursor-default select-none">{value}</strong>
               </div>
             ))}
           </div>
@@ -155,17 +170,25 @@ export default function AuthVisual({ variant = "login" }) {
           <div className="preview-divider" />
 
           <div className="preview-split">
-            <span>{slide.footerLabel}</span>
-            <strong>{slide.footerValue}</strong>
+            <span className="cursor-default select-none">
+              {slide.footerLabel}
+            </span>
+
+            <strong className="cursor-default select-none">
+              {slide.footerValue}
+            </strong>
           </div>
         </div>
 
+        {/* Slide Controls */}
         <div className="preview-dots">
           {slides.map((item, index) => (
             <button
               type="button"
               key={item.type}
-              className={activeSlide === index ? "active" : ""}
+              className={`cursor-pointer ${
+                activeSlide === index ? "active" : ""
+              }`}
               onClick={() => setActiveSlide(index)}
               aria-label={`Show ${item.type.toLowerCase()} preview`}
               aria-pressed={activeSlide === index}

@@ -11,7 +11,6 @@ import * as authService from "../features/auth/services/auth.service";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // undefined while the session is being checked, null when logged out.
   const [user, setUser] = useState(undefined);
 
   useEffect(() => {
@@ -27,6 +26,7 @@ export function AuthProvider({ children }) {
     }
 
     window.addEventListener("auth:unauthorized", handleUnauthorized);
+
     return () =>
       window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, []);
@@ -49,9 +49,9 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Applies local profile edits until the backend can save them.
-  const updateUser = useCallback((changes) => {
-    setUser((prev) => (prev ? { ...prev, ...changes } : prev));
+  // Update authenticated user with data returned by the backend.
+  const updateUser = useCallback((updatedUser) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedUser } : prev));
   }, []);
 
   return (
@@ -61,7 +61,6 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Hook lives beside its provider; only affects fast refresh of this file.
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);

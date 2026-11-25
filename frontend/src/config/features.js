@@ -91,7 +91,7 @@ export const FEATURES = {
     needs: ["GET/POST/DELETE /integrations"],
   },
   profileEditing: {
-    ready: false,
+    ready: true,
     title: "Edit your profile",
     description: "Change your name, username, email and password.",
     needs: ["PATCH /users/me", "PATCH /users/me/password"],

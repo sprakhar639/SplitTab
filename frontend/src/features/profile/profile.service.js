@@ -1,11 +1,15 @@
-import { mockProfile } from "../../services/mockData";
+import api from "../../services/api";
 
-// Mock for PATCH /users/me
-export function updateProfile(userId, changes) {
-  return mockProfile.update(userId, changes);
+export async function updateProfile(changes) {
+  const response = await api.patch("/auth/profile", changes);
+  return response.user;
 }
 
-// Mock for PATCH /users/me/password
-export function changePassword({ currentPassword, newPassword }) {
-  return mockProfile.changePassword({ currentPassword, newPassword });
+export async function changePassword({ currentPassword, newPassword }) {
+  const response = await api.patch("/auth/password", {
+    currentPassword,
+    newPassword,
+  });
+
+  return response;
 }

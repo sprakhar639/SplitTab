@@ -14,14 +14,16 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 function Notice({ children }) {
   return (
-    <p role="status" className="rounded-lg bg-mint/30 px-3 py-2 text-sm font-semibold text-success">
+    <p
+      role="status"
+      className="rounded-lg bg-mint/30 px-3 py-2 text-sm font-semibold text-success"
+    >
       ✓ {children}
     </p>
   );
 }
 
 function DetailsForm({ user, onSaved }) {
-  const isPreview = usePreview();
   const [form, setForm] = useState({
     name: user.name ?? "",
     username: user.username ?? "",
@@ -48,9 +50,12 @@ function DetailsForm({ user, onSaved }) {
     const username = form.username.trim();
     const email = form.email.trim();
 
-    if (name.length < 2) newErrors.name = "Name must contain at least 2 characters";
-    if (!USERNAME_REGEX.test(username)) newErrors.username = "Use 3-20 letters, numbers or underscores";
-    if (!EMAIL_REGEX.test(email)) newErrors.email = "Enter a valid email address";
+    if (name.length < 2)
+      newErrors.name = "Name must contain at least 2 characters";
+    if (!USERNAME_REGEX.test(username))
+      newErrors.username = "Use 3-20 letters, numbers or underscores";
+    if (!EMAIL_REGEX.test(email))
+      newErrors.email = "Enter a valid email address";
 
     return newErrors;
   }
@@ -70,13 +75,9 @@ function DetailsForm({ user, onSaved }) {
 
     setSaving(true);
     try {
-      await updateProfile(user.id, changes);
-      if (isPreview) {
-        setNotice("Looks good. When this is live, saving will update your profile.");
-      } else {
-        onSaved(changes);
-        setNotice("Profile updated");
-      }
+      const updatedUser = await updateProfile(changes);
+      onSaved(updatedUser);
+      setNotice("Profile updated");
     } catch (err) {
       setErrors({ form: err.message });
     } finally {
@@ -85,13 +86,27 @@ function DetailsForm({ user, onSaved }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-xl border border-line bg-white p-6">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="flex flex-col gap-4 rounded-xl border border-line bg-white p-6"
+    >
       <div>
         <h2 className="text-base font-extrabold">Personal details</h2>
-        <p className="text-sm text-mute">How you appear to people in your groups.</p>
+        <p className="text-sm text-mute">
+          How you appear to people in your groups.
+        </p>
       </div>
 
-      <Input id="profile-name" name="name" label="Full name" value={form.name} onChange={handleChange} error={errors.name} autoComplete="name" />
+      <Input
+        id="profile-name"
+        name="name"
+        label="Full name"
+        value={form.name}
+        onChange={handleChange}
+        error={errors.name}
+        autoComplete="name"
+      />
       <Input
         id="profile-username"
         name="username"
@@ -115,11 +130,18 @@ function DetailsForm({ user, onSaved }) {
       />
 
       {errors.form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-danger">{errors.form}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-danger">
+          {errors.form}
+        </p>
       )}
       {notice && <Notice>{notice}</Notice>}
 
-      <Button type="submit" loading={saving} disabled={!changed} className="self-start">
+      <Button
+        type="submit"
+        loading={saving}
+        disabled={!changed}
+        className="self-start"
+      >
         Save changes
       </Button>
     </form>
@@ -145,10 +167,14 @@ function PasswordForm() {
     e.preventDefault();
 
     const newErrors = {};
-    if (!form.currentPassword) newErrors.currentPassword = "Enter your current password";
-    if (form.newPassword.length < 8) newErrors.newPassword = "Password must contain at least 8 characters";
-    else if (form.newPassword === form.currentPassword) newErrors.newPassword = "Choose a password you haven't used here";
-    if (form.confirmPassword !== form.newPassword) newErrors.confirmPassword = "Passwords do not match";
+    if (!form.currentPassword)
+      newErrors.currentPassword = "Enter your current password";
+    if (form.newPassword.length < 8)
+      newErrors.newPassword = "Password must contain at least 8 characters";
+    else if (form.newPassword === form.currentPassword)
+      newErrors.newPassword = "Choose a password you haven't used here";
+    if (form.confirmPassword !== form.newPassword)
+      newErrors.confirmPassword = "Passwords do not match";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
@@ -157,7 +183,11 @@ function PasswordForm() {
     try {
       await changePassword(form);
       setForm(empty);
-      setNotice(isPreview ? "Looks good. When this is live, your password will change." : "Password changed");
+      setNotice(
+        isPreview
+          ? "Looks good. When this is live, your password will change."
+          : "Password changed",
+      );
     } catch (err) {
       setErrors({ form: err.message });
     } finally {
@@ -166,7 +196,11 @@ function PasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 rounded-xl border border-line bg-white p-6">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="flex flex-col gap-4 rounded-xl border border-line bg-white p-6"
+    >
       <div>
         <h2 className="text-base font-extrabold">Password</h2>
         <p className="text-sm text-mute">Use at least 8 characters.</p>
@@ -204,7 +238,9 @@ function PasswordForm() {
       />
 
       {errors.form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-danger">{errors.form}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-danger">
+          {errors.form}
+        </p>
       )}
       {notice && <Notice>{notice}</Notice>}
 
@@ -227,7 +263,10 @@ function AccountDetails({ user }) {
       <h2 className="text-base font-extrabold">Account details</h2>
       <dl className="flex flex-col divide-y divide-line">
         {rows.map(([label, value]) => (
-          <div key={label} className="flex flex-wrap justify-between gap-2 py-2.5 text-sm">
+          <div
+            key={label}
+            className="flex flex-wrap justify-between gap-2 py-2.5 text-sm"
+          >
             <dt className="text-mute">{label}</dt>
             <dd className="font-semibold">{value || "—"}</dd>
           </div>
@@ -246,7 +285,9 @@ export default function Profile() {
       <div className="flex items-center gap-4">
         <Avatar name={displayName} id={user.id} size="size-14" />
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-extrabold tracking-tight">{displayName}</h1>
+          <h1 className="truncate text-2xl font-extrabold tracking-tight">
+            {displayName}
+          </h1>
           <p className="text-sm text-mute">
             {user.email || "No email on file"}
             {user.id && ` · User ID ${user.id}`}

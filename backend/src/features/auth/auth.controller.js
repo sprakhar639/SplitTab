@@ -4,6 +4,7 @@ import {
   logout,
   getCurrentUser,
   updateProfile,
+  changePassword,
 } from "./auth.service.js";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -16,6 +17,7 @@ const cookieOptions = {
   path: "/",
 };
 
+// REGISTER
 async function userRegister(req, res, next) {
   try {
     const sessionToken = await register(req.body);
@@ -30,6 +32,7 @@ async function userRegister(req, res, next) {
   }
 }
 
+// LOGIN
 async function userLogin(req, res, next) {
   try {
     const sessionToken = await login(req.body);
@@ -44,6 +47,7 @@ async function userLogin(req, res, next) {
   }
 }
 
+// LOGOUT
 async function userLogout(req, res, next) {
   try {
     const sessionId = req.cookies.sessionId;
@@ -65,6 +69,7 @@ async function userLogout(req, res, next) {
   }
 }
 
+// GET CURRENT USER
 async function currentUserController(req, res, next) {
   try {
     const userId = req.user.id;
@@ -80,23 +85,51 @@ async function currentUserController(req, res, next) {
   }
 }
 
+// UPDATE PROFILE
 async function updateProfileController(req, res, next) {
   try {
     const userId = Number(req.user.id);
     const { name, username, email } = req.body;
 
-    const result = await updateProfile(userId, { name, username, email });
-    return res
-      .status(200)
-      .json({ message: "Profile Updated Successfully", result });
+    const result = await updateProfile(userId, {
+      name,
+      username,
+      email,
+    });
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: result,
+    });
   } catch (error) {
     next(error);
   }
 }
+
+// CHANGE PASSWORD
+async function changePasswordController(req, res, next) {
+  try {
+    const userId = Number(req.user.id);
+    const { currentPassword, newPassword } = req.body;
+
+    await changePassword(userId, {
+      currentPassword,
+      newPassword,
+    });
+
+    return res.status(200).json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export {
   userRegister,
   userLogin,
   userLogout,
   currentUserController,
   updateProfileController,
+  changePasswordController,
 };

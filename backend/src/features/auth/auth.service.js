@@ -2,15 +2,16 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import db from "../../prisma/db.ts";
 import redis from "../../config/redis.js";
+import AppError from "../../utils/AppError.js";
 import { or } from "@prisma/orm-postgres/orm-client";
+
 const { User } = db.orm.public;
+
 const SESSION_DURATION = 7 * 24 * 60 * 60;
 
-function createError(message, statusCode) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
-}
+// Redis session keys
+const SESSION_PREFIX = "splittab:session:";
+const USER_SESSIONS_PREFIX = "splittab:user-sessions:";
 
 // Generate SHA-256 hash of session token
 function hashSessionToken(sessionToken) {
@@ -25,21 +26,33 @@ async function createSession(userId) {
   // Store only its hash in Redis
   const tokenHash = hashSessionToken(sessionToken);
 
-  await redis.set(
-    `splittab:session:${tokenHash}`,
-    String(userId),
-    "EX",
-    SESSION_DURATION,
-  );
+  const sessionKey = `${SESSION_PREFIX}${tokenHash}`;
+  const userSessionsKey = `${USER_SESSIONS_PREFIX}${userId}`;
+
+  // Store session
+  await redis.set(sessionKey, String(userId), "EX", SESSION_DURATION);
+
+  // Maintain a per-user session index
+  await redis.sadd(userSessionsKey, tokenHash);
+  await redis.expire(userSessionsKey, SESSION_DURATION);
 
   return sessionToken;
 }
 
 // REGISTER
-async function register({ username, email, password, name }) {
+async function register({ username, email, password, name } = {}) {
   // Validate required fields
-  if (!username || !email || !password || !name) {
-    throw createError("All fields are required", 400);
+  if (
+    typeof username !== "string" ||
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    typeof name !== "string" ||
+    !username.trim() ||
+    !email.trim() ||
+    !password ||
+    !name.trim()
+  ) {
+    throw new AppError("All fields are required", 400);
   }
 
   // Normalize input
@@ -49,12 +62,12 @@ async function register({ username, email, password, name }) {
 
   // Validate name
   if (name.length < 2) {
-    throw createError("Name must contain at least 2 characters", 400);
+    throw new AppError("Name must contain at least 2 characters", 400);
   }
 
   // Validate username
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-    throw createError(
+    throw new AppError(
       "Username must contain 3-20 letters, numbers or underscores",
       400,
     );
@@ -62,12 +75,15 @@ async function register({ username, email, password, name }) {
 
   // Validate email
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw createError("Invalid email address", 400);
+    throw new AppError("Invalid email address", 400);
   }
 
   // Validate password
-  if (typeof password !== "string" || password.length < 8) {
-    throw createError("Password must contain at least 8 characters", 400);
+  if (password.length < 8 || password.length > 128) {
+    throw new AppError(
+      "Password must contain between 8 and 128 characters",
+      400,
+    );
   }
 
   // Check duplicate email or username
@@ -76,7 +92,7 @@ async function register({ username, email, password, name }) {
   ).first();
 
   if (existingUser) {
-    throw createError("Email or username already exists", 409);
+    throw new AppError("Email or username already exists", 409);
   }
 
   // Hash password
@@ -97,9 +113,14 @@ async function register({ username, email, password, name }) {
 }
 
 // LOGIN
-async function login({ identifier, password }) {
-  if (!identifier || !password) {
-    throw createError("Email/username and password are required", 400);
+async function login({ identifier, password } = {}) {
+  if (
+    typeof identifier !== "string" ||
+    typeof password !== "string" ||
+    !identifier.trim() ||
+    !password
+  ) {
+    throw new AppError("Email/username and password are required", 400);
   }
 
   identifier = identifier.trim().toLowerCase();
@@ -110,14 +131,14 @@ async function login({ identifier, password }) {
   ).first();
 
   if (!user) {
-    throw createError("Invalid credentials", 401);
+    throw new AppError("Invalid credentials", 401);
   }
 
   // Compare password
   const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
   if (!passwordMatch) {
-    throw createError("Invalid credentials", 401);
+    throw new AppError("Invalid credentials", 401);
   }
 
   // Create session
@@ -135,21 +156,32 @@ async function logout(sessionId) {
 
   const tokenHash = hashSessionToken(sessionId);
 
-  await redis.del(`splittab:session:${tokenHash}`);
+  const sessionKey = `${SESSION_PREFIX}${tokenHash}`;
+
+  // Get user ID before deleting session
+  const userId = await redis.get(sessionKey);
+
+  // Delete session
+  await redis.del(sessionKey);
+
+  // Remove session from user's session index
+  if (userId) {
+    await redis.srem(`${USER_SESSIONS_PREFIX}${userId}`, tokenHash);
+  }
 }
 
 // GET CURRENT USER
 async function getCurrentUser(userId) {
   // Validate user ID
   if (!Number.isSafeInteger(userId) || userId <= 0) {
-    throw createError("Invalid user ID", 400);
+    throw new AppError("Invalid user ID", 400);
   }
 
   // Find user
   const user = await User.where((u) => u.id.eq(userId)).first();
 
   if (!user) {
-    throw createError("User not found", 404);
+    throw new AppError("User not found", 404);
   }
 
   // Return only required information
@@ -162,17 +194,17 @@ async function getCurrentUser(userId) {
 }
 
 // UPDATE USER PROFILE
-async function updateProfile(userId, { name, username, email }) {
+async function updateProfile(userId, { name, username, email } = {}) {
   // Validate user ID
   if (!Number.isSafeInteger(userId) || userId <= 0) {
-    throw createError("Invalid user ID", 400);
+    throw new AppError("Invalid user ID", 400);
   }
 
   // Find user
   const user = await User.where((u) => u.id.eq(userId)).first();
 
   if (!user) {
-    throw createError("User not found", 404);
+    throw new AppError("User not found", 404);
   }
 
   // Build update object using only provided fields
@@ -180,17 +212,21 @@ async function updateProfile(userId, { name, username, email }) {
 
   if (name !== undefined) {
     if (typeof name !== "string" || name.trim().length < 2) {
-      throw createError("Name must contain at least 2 characters", 400);
+      throw new AppError("Name must contain at least 2 characters", 400);
     }
 
     updateData.name = name.trim();
   }
 
   if (username !== undefined) {
+    if (typeof username !== "string") {
+      throw new AppError("Invalid username", 400);
+    }
+
     username = username.trim().toLowerCase();
 
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-      throw createError(
+      throw new AppError(
         "Username must contain 3-20 letters, numbers or underscores",
         400,
       );
@@ -200,17 +236,21 @@ async function updateProfile(userId, { name, username, email }) {
   }
 
   if (email !== undefined) {
+    if (typeof email !== "string") {
+      throw new AppError("Invalid email address", 400);
+    }
+
     email = email.trim().toLowerCase();
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw createError("Invalid email address", 400);
+      throw new AppError("Invalid email address", 400);
     }
 
     updateData.email = email;
   }
 
   if (Object.keys(updateData).length === 0) {
-    throw createError("No fields provided for update", 400);
+    throw new AppError("No fields provided for update", 400);
   }
 
   // Update user
@@ -219,10 +259,89 @@ async function updateProfile(userId, { name, username, email }) {
   );
 
   return {
+    id: updatedUser.id,
     name: updatedUser.name,
     username: updatedUser.username,
     email: updatedUser.email,
   };
 }
 
-export { register, login, logout, getCurrentUser, updateProfile };
+// CHANGE PASSWORD
+async function changePassword(userId, { currentPassword, newPassword } = {}) {
+  // 1. Validate user ID
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw new AppError("Invalid user ID", 400);
+  }
+
+  // 2. Validate password inputs
+  if (
+    typeof currentPassword !== "string" ||
+    typeof newPassword !== "string" ||
+    !currentPassword ||
+    !newPassword
+  ) {
+    throw new AppError("Both passwords are required", 400);
+  }
+
+  // 3. Validate new password length
+  if (newPassword.length < 8 || newPassword.length > 128) {
+    throw new AppError(
+      "Password must contain between 8 and 128 characters",
+      400,
+    );
+  }
+
+  // 4. Fetch user
+  const user = await User.where((u) => u.id.eq(userId)).first();
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  // 5. Verify current password
+  const isPasswordValid = await bcrypt.compare(
+    currentPassword,
+    user.passwordHash,
+  );
+
+  if (!isPasswordValid) {
+    throw new AppError("Current password is incorrect", 400);
+  }
+
+  // 6. Prevent reusing current password
+  if (currentPassword === newPassword) {
+    throw new AppError("New password must differ from current password", 400);
+  }
+
+  // 7. Hash new password
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+
+  // 8. Update password
+  await User.where((u) => u.id.eq(userId)).update({
+    passwordHash,
+  });
+
+  // 9. Invalidate all existing Redis sessions
+  const userSessionsKey = `${USER_SESSIONS_PREFIX}${userId}`;
+
+  const sessionHashes = await redis.smembers(userSessionsKey);
+
+  if (sessionHashes.length > 0) {
+    const sessionKeys = sessionHashes.map((hash) => `${SESSION_PREFIX}${hash}`);
+
+    await redis.del(...sessionKeys);
+  }
+
+  await redis.del(userSessionsKey);
+
+  return { success: true };
+}
+
+export {
+  register,
+  login,
+  logout,
+  getCurrentUser,
+  updateProfile,
+  changePassword,
+};

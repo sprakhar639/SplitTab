@@ -6,6 +6,7 @@ import {
   userLogout,
   currentUserController,
   updateProfileController,
+  changePasswordController,
 } from "./auth.controller.js";
 
 const router = Router();
@@ -15,5 +16,6 @@ router.post("/login", userLogin);
 router.post("/logout", userLogout);
 router.get("/me", authMiddleware, currentUserController);
 router.patch("/profile", authMiddleware, updateProfileController);
+router.patch("/password", authMiddleware, changePasswordController);
 
 export default router;

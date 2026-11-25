@@ -3,6 +3,7 @@ import {
   login,
   logout,
   getCurrentUser,
+  updateProfile,
 } from "./auth.service.js";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -79,9 +80,23 @@ async function currentUserController(req, res, next) {
   }
 }
 
+async function updateProfileController(req, res, next) {
+  try {
+    const userId = Number(req.user.id);
+    const { name, username, email } = req.body;
+
+    const result = await updateProfile(userId, { name, username, email });
+    return res
+      .status(200)
+      .json({ message: "Profile Updated Successfully", result });
+  } catch (error) {
+    next(error);
+  }
+}
 export {
   userRegister,
   userLogin,
   userLogout,
   currentUserController,
+  updateProfileController,
 };

@@ -17,6 +17,24 @@ function hashSessionToken(sessionToken) {
   return crypto.createHash("sha256").update(sessionToken).digest("hex");
 }
 
+// CREATE SESSION
+async function createSession(userId) {
+  // Generate cryptographically secure token
+  const sessionToken = crypto.randomBytes(32).toString("hex");
+
+  // Store only its hash in Redis
+  const tokenHash = hashSessionToken(sessionToken);
+
+  await redis.set(
+    `splittab:session:${tokenHash}`,
+    String(userId),
+    "EX",
+    SESSION_DURATION,
+  );
+
+  return sessionToken;
+}
+
 // REGISTER
 async function register({ username, email, password, name }) {
   // Validate required fields
@@ -120,24 +138,6 @@ async function logout(sessionId) {
   await redis.del(`splittab:session:${tokenHash}`);
 }
 
-// CREATE SESSION
-async function createSession(userId) {
-  // Generate cryptographically secure token
-  const sessionToken = crypto.randomBytes(32).toString("hex");
-
-  // Store only its hash in Redis
-  const tokenHash = hashSessionToken(sessionToken);
-
-  await redis.set(
-    `splittab:session:${tokenHash}`,
-    String(userId),
-    "EX",
-    SESSION_DURATION,
-  );
-
-  return sessionToken;
-}
-
 // GET CURRENT USER
 async function getCurrentUser(userId) {
   // Validate user ID
@@ -161,4 +161,68 @@ async function getCurrentUser(userId) {
   };
 }
 
-export { register, login, logout, getCurrentUser };
+// UPDATE USER PROFILE
+async function updateProfile(userId, { name, username, email }) {
+  // Validate user ID
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw createError("Invalid user ID", 400);
+  }
+
+  // Find user
+  const user = await User.where((u) => u.id.eq(userId)).first();
+
+  if (!user) {
+    throw createError("User not found", 404);
+  }
+
+  // Build update object using only provided fields
+  const updateData = {};
+
+  if (name !== undefined) {
+    if (typeof name !== "string" || name.trim().length < 2) {
+      throw createError("Name must contain at least 2 characters", 400);
+    }
+
+    updateData.name = name.trim();
+  }
+
+  if (username !== undefined) {
+    username = username.trim().toLowerCase();
+
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+      throw createError(
+        "Username must contain 3-20 letters, numbers or underscores",
+        400,
+      );
+    }
+
+    updateData.username = username;
+  }
+
+  if (email !== undefined) {
+    email = email.trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw createError("Invalid email address", 400);
+    }
+
+    updateData.email = email;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    throw createError("No fields provided for update", 400);
+  }
+
+  // Update user
+  const updatedUser = await User.where((u) => u.id.eq(userId)).update(
+    updateData,
+  );
+
+  return {
+    name: updatedUser.name,
+    username: updatedUser.username,
+    email: updatedUser.email,
+  };
+}
+
+export { register, login, logout, getCurrentUser, updateProfile };

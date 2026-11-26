@@ -15,10 +15,7 @@ import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "http://localhost:5173",
-].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
 
 app.use(
   cors({

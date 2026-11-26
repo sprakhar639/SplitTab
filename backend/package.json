@@ -13,6 +13,7 @@
     "start": "node server.js",
     "migration": "prisma migration plan --name",
     "migrate": "prisma db migrate --advance-ref db",
+    "migrate:production": "dotenv -e .env.production -- prisma db migrate --advance-ref db",
     "seed": "node seed.js"
   },
   "keywords": [],
@@ -34,6 +35,7 @@
   "devDependencies": {
     "@prisma/cli-engine": "^0.4.0",
     "@types/node": "^26.6.2",
+    "dotenv-cli": "^11.1.0",
     "prettier": "^3.9.10",
     "prisma": "^8.0.0-rc.15",
     "vitest": "^4.1.12"

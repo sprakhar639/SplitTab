@@ -5,6 +5,8 @@ import {
   getCurrentUser,
   updateProfile,
   changePassword,
+  forgetPassword,
+  resetPassword,
 } from "./auth.service.js";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -51,16 +53,13 @@ async function userLogin(req, res, next) {
 async function userLogout(req, res, next) {
   try {
     const sessionId = req.cookies.sessionId;
-
     await logout(sessionId);
-
     res.clearCookie("sessionId", {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
       path: "/",
     });
-
     return res.status(200).json({
       message: "Logged Out Successfully",
     });
@@ -125,6 +124,37 @@ async function changePasswordController(req, res, next) {
   }
 }
 
+// FORGOT PASSWORD
+async function forgetPasswordController(req, res, next) {
+  try {
+    const { email } = req.body;
+
+    await forgetPassword(email);
+
+    return res.status(200).json({
+      message:
+        "If an account exists for this email, a password reset link will be sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// RESET PASSWORD
+async function resetPasswordController(req, res, next) {
+  try {
+    const { password, token } = req.body;
+
+    await resetPassword(password, token);
+
+    return res.status(200).json({
+      message: "Password updated successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export {
   userRegister,
   userLogin,
@@ -132,4 +162,6 @@ export {
   currentUserController,
   updateProfileController,
   changePasswordController,
+  forgetPasswordController,
+  resetPasswordController,
 };

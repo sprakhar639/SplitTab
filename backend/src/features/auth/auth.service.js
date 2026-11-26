@@ -3,7 +3,8 @@ import crypto from "crypto";
 import db from "../../prisma/db.ts";
 import redis from "../../config/redis.js";
 import AppError from "../../utils/AppError.js";
-import { or } from "@prisma/orm-postgres/orm-client";
+import "temporal-polyfill/full/global";
+import { and, or } from "@prisma/orm-postgres/orm-client";
 
 const { User } = db.orm.public;
 
@@ -337,6 +338,151 @@ async function changePassword(userId, { currentPassword, newPassword } = {}) {
   return { success: true };
 }
 
+// FORGET PASSWORD
+async function forgetPassword(email) {
+  // Validate email
+  if (typeof email !== "string" || !email.trim()) {
+    throw new AppError("Email is required", 400);
+  }
+
+  email = email.trim().toLowerCase();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new AppError("Invalid email address", 400);
+  }
+
+  // Find user
+  const user = await User.where((u) => u.email.eq(email)).first();
+
+  // Avoid exposing whether an account exists
+  if (!user) {
+    return { success: true };
+  }
+
+  // Generate reset token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // Hash token
+  const tokenHash = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // Calculate expiration
+  const expiresAt = Temporal.Now.instant().add({
+    minutes: 5,
+  });
+
+  // Store token hash in database
+  const { PasswordResetToken } = db.orm.public;
+
+  // Invalidate previous unused reset tokens
+  await PasswordResetToken.where((t) =>
+    and(t.userId.eq(user.id), t.usedAt.isNull()),
+  ).updateAll({
+    usedAt: Temporal.Now.instant(),
+  });
+
+  await PasswordResetToken.create({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  });
+
+  return {
+    success: true,
+    resetToken,
+  };
+}
+
+// RESET PASSWORD
+async function resetPassword(password, token) {
+  // Validate password
+  if (
+    typeof password !== "string" ||
+    password.length < 8 ||
+    password.length > 128
+  ) {
+    throw new AppError(
+      "Password must contain between 8 and 128 characters",
+      400,
+    );
+  }
+
+  // Validate token
+  if (typeof token !== "string" || !token.trim()) {
+    throw new AppError("Reset token is required", 400);
+  }
+
+  // Hash received token
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const { PasswordResetToken } = db.orm.public;
+
+  // Find reset token
+  const check = await PasswordResetToken.where((t) =>
+    t.tokenHash.eq(tokenHash),
+  ).first();
+  if (!check) {
+    throw new AppError("Invalid reset token", 400);
+  }
+
+  // Check token usage
+  if (check.usedAt !== null) {
+    throw new AppError("Reset token has already been used", 400);
+  }
+
+  // Check token expiry
+  if (Temporal.Instant.compare(check.expiresAt, Temporal.Now.instant()) <= 0) {
+    throw new AppError("Reset token has expired", 400);
+  }
+
+  // Hash new password
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // Atomically consume token and update password
+  await db.transaction(async (tx) => {
+    const { User, PasswordResetToken } = tx.orm.public;
+
+    // Consume token only if it is unused and unexpired
+    const consumedToken = await PasswordResetToken.where((t) =>
+      and(
+        t.id.eq(check.id),
+        t.usedAt.isNull(),
+        t.expiresAt.gt(Temporal.Now.instant()),
+      ),
+    ).update({
+      usedAt: Temporal.Now.instant(),
+    });
+
+    if (!consumedToken) {
+      throw new AppError(
+        "Reset token is invalid, expired or already used",
+        400,
+      );
+    }
+
+    // Update associated user's password
+    await User.where((u) => u.id.eq(check.userId)).update({
+      passwordHash,
+    });
+  });
+
+  // Invalidate all existing Redis sessions
+  const userSessionsKey = `${USER_SESSIONS_PREFIX}${check.userId}`;
+
+  const sessionHashes = await redis.smembers(userSessionsKey);
+
+  if (sessionHashes.length > 0) {
+    const sessionKeys = sessionHashes.map((hash) => `${SESSION_PREFIX}${hash}`);
+
+    await redis.del(...sessionKeys);
+  }
+
+  await redis.del(userSessionsKey);
+
+  return { success: true };
+}
+
 export {
   register,
   login,
@@ -344,4 +490,6 @@ export {
   getCurrentUser,
   updateProfile,
   changePassword,
+  forgetPassword,
+  resetPassword,
 };

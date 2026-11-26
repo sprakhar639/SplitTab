@@ -4,6 +4,8 @@ import db from "../../prisma/db.ts";
 import redis from "../../config/redis.js";
 import AppError from "../../utils/AppError.js";
 import "temporal-polyfill/full/global";
+import { sendEmail } from "../../services/email.service.js";
+import { passwordResetTemplate } from "../../services/email.templates.js";
 import { and, or } from "@prisma/orm-postgres/orm-client";
 
 const { User } = db.orm.public;
@@ -389,9 +391,18 @@ async function forgetPassword(email) {
     expiresAt,
   });
 
+  // Generate password reset link
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+  // Send password reset email
+  await sendEmail({
+    to: user.email,
+    subject: "Reset Your SplitTab Password",
+    html: passwordResetTemplate(resetLink),
+  });
+
   return {
     success: true,
-    resetToken,
   };
 }
 

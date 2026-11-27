@@ -997,7 +997,7 @@
                 }
               },
               "passwordHash": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -2060,7 +2060,7 @@
                 "passwordHash": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": false
+                  "nullable": true
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -2099,7 +2099,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "f18b9fe0bcd3268ff0e311b5a6d23c57c5992c404196412ea058a5c517590f6f"
+    "storageHash": "193f2233d63b3d131dc3c19ac2432c4f0c6a92a05b065ea71168a5e22b2724ea"
   },
   "execution": {
     "executionHash": "0d7eed3a21d4ce96d3bbbf0a4c1b7dd6a1bb2167e123108231495856c0cf58bf",

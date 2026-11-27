@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../../context/AuthContext";
@@ -19,6 +19,26 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState(
+    location.state?.successMessage || location.state?.message || "",
+  );
+
+  // Clear navigation state so the notification doesn't reappear on refresh.
+  useEffect(() => {
+    if (successMessage) {
+      navigate(`${location.pathname}${location.search}`, {
+        replace: true,
+        state: null,
+      });
+
+      const timer = setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, navigate, location.pathname, location.search]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -57,14 +77,19 @@ export default function Login() {
     if (Object.keys(validationErrors).length > 0) return;
 
     setSubmitting(true);
+
     try {
       await login({
         identifier: formData.identifier.trim(),
         password: formData.password,
       });
-      navigate(location.state?.from ?? "/dashboard", { replace: true });
+
+      navigate(location.state?.from ?? "/dashboard", {
+        replace: true,
+      });
     } catch (error) {
       setErrors({ form: error.message });
+    } finally {
       setSubmitting(false);
     }
   }
@@ -83,9 +108,9 @@ export default function Login() {
             <p>Continue managing your shared expenses.</p>
           </div>
 
-          {location.state?.message && (
+          {successMessage && (
             <p className="form-success" role="status">
-              {location.state.message}
+              {successMessage}
             </p>
           )}
 
@@ -145,13 +170,18 @@ export default function Login() {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
+
                 <span>Remember me</span>
               </label>
 
               <Link to="/forgot-password">Forgot password?</Link>
             </div>
 
-            {errors.form && <span className="field-error">{errors.form}</span>}
+            {errors.form && (
+              <span className="field-error" role="alert">
+                {errors.form}
+              </span>
+            )}
 
             <button type="submit" className="auth-submit" disabled={submitting}>
               {submitting ? (

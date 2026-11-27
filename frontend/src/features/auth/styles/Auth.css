@@ -925,3 +925,11 @@ body {
   caret-color: #ffffff;
   transition: background-color 9999s ease-in-out 0s;
 }
+
+/* Hide browser's built-in password reveal button.
+   The application uses its own Show/Hide controls. */
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

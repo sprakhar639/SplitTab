@@ -7,6 +7,8 @@ import AuthLayout from "../layouts/AuthLayout";
 
 import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
+import ForgotPassword from "../features/auth/pages/ForgotPassword";
+
 import Dashboard from "../features/dashboard/pages/Dashboard";
 import Groups from "../features/groups/pages/Groups";
 import GroupDetails from "../features/groups/pages/GroupDetails";
@@ -27,12 +29,14 @@ export default function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/groups" element={<Groups />} />
+
           <Route
             path="/expenses"
             element={
@@ -41,6 +45,7 @@ export default function AppRoutes() {
               </FeatureGate>
             }
           />
+
           <Route
             path="/settlements"
             element={
@@ -49,6 +54,7 @@ export default function AppRoutes() {
               </FeatureGate>
             }
           />
+
           <Route
             path="/munshi-ai"
             element={
@@ -57,7 +63,12 @@ export default function AppRoutes() {
               </FeatureGate>
             }
           />
-          <Route path="/assistant" element={<Navigate to="/munshi-ai" replace />} />
+
+          <Route
+            path="/assistant"
+            element={<Navigate to="/munshi-ai" replace />}
+          />
+
           <Route
             path="/reminders"
             element={
@@ -66,6 +77,7 @@ export default function AppRoutes() {
               </FeatureGate>
             }
           />
+
           <Route
             path="/integrations"
             element={
@@ -74,13 +86,18 @@ export default function AppRoutes() {
               </FeatureGate>
             }
           />
+
           <Route path="/profile" element={<Profile />} />
           <Route path="/groups/:groupId" element={<GroupDetails />} />
           <Route
             path="/groups/:groupId/members"
             element={<GroupDetails tab="members" />}
           />
-          <Route path="/groups/:groupId/expenses/new" element={<AddExpense />} />
+          <Route
+            path="/groups/:groupId/expenses/new"
+            element={<AddExpense />}
+          />
+
           <Route
             path="/groups/:groupId/expenses/:expenseId"
             element={
@@ -89,6 +106,7 @@ export default function AppRoutes() {
               </FeatureGate>
             }
           />
+
           <Route path="/groups/:groupId/balances" element={<Balances />} />
           <Route path="/groups/:groupId/settle" element={<Settlements />} />
         </Route>

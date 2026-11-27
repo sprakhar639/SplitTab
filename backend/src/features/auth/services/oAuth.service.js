@@ -8,7 +8,7 @@ async function linkOAuthAccount(userId, { provider, providerAccountId } = {}) {
   const { Account } = db.orm.public;
 
   // Validate provider
-  const allowedProviders = ["google", "github", "linkedin"];
+  const allowedProviders = ["google", "instagram", "linkedin"];
 
   if (!allowedProviders.includes(provider)) {
     throw new AppError("Unsupported OAuth provider", 400);

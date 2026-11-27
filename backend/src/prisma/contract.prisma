@@ -16,6 +16,8 @@ model User {
   createdGroups       Group[]                    @relation("GroupCreater")
   conversations       Conversation[]
   passwordResetTokens PasswordResetToken[]
+  account             Account[]
+
   @@map("users")
 }
 
@@ -109,13 +111,13 @@ model Settlement {
 }
 
 model Conversation {
-  id        Int               @id @default(autoincrement())
+  id        Int                        @id @default(autoincrement())
   userId    Int
-  isActive  Boolean           @default(true)
-  createdAt TimestamptzString @default(now())
-  updatedAt   temporal.updatedAtString()
+  isActive  Boolean                    @default(true)
+  createdAt TimestamptzString          @default(now())
+  updatedAt temporal.updatedAtString()
 
-  user      User              @relation(fields:[userId], references:[id], onDelete: Cascade)
+  user      User                       @relation(fields:[userId], references:[id], onDelete: Cascade)
   messages  Message[]
 
   @@index([userId])
@@ -135,7 +137,6 @@ model Message {
   @@map("messages")
 }
 
-
 model PasswordResetToken {
   id        Int       @id @default(autoincrement())
   userId    Int
@@ -144,7 +145,20 @@ model PasswordResetToken {
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields:[userId], references:[id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model Account {
+  id                Int    @id @default(autoincrement())
+  userId            Int
+  provider          String
+  providerAccountId String
+
+  user              User   @relation(fields:[userId], references:[id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
 }

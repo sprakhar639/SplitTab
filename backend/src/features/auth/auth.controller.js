@@ -3,11 +3,15 @@ import {
   login,
   logout,
   getCurrentUser,
-  updateProfile,
+} from "./services/auth.service.js";
+
+import { updateProfile } from "./services/profile.service.js";
+
+import {
   changePassword,
   forgetPassword,
   resetPassword,
-} from "./auth.service.js";
+} from "./services/password.service.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -52,14 +56,17 @@ async function userLogin(req, res, next) {
 // LOGOUT
 async function userLogout(req, res, next) {
   try {
-    const sessionId = req.cookies.sessionId;
+    const sessionId = req.cookies?.sessionId;
+
     await logout(sessionId);
+
     res.clearCookie("sessionId", {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
       path: "/",
     });
+
     return res.status(200).json({
       message: "Logged Out Successfully",
     });
@@ -71,7 +78,7 @@ async function userLogout(req, res, next) {
 // GET CURRENT USER
 async function currentUserController(req, res, next) {
   try {
-    const userId = req.user.id;
+    const userId = Number(req.user.id);
 
     const user = await getCurrentUser(userId);
 

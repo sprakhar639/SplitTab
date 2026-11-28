@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom";
 
 import { useAuth } from "../../../context/AuthContext";
 import AuthVisual from "../components/AuthVisual";
@@ -9,6 +14,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { googleError } = useOutletContext();
 
   const [formData, setFormData] = useState({
     identifier: "",
@@ -18,28 +24,30 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState(
     location.state?.successMessage || location.state?.message || "",
   );
 
-  // Clear navigation state so the notification doesn't reappear on refresh.
+  // Clear navigation state after displaying success message.
   useEffect(() => {
-    if (successMessage) {
-      navigate(`${location.pathname}${location.search}`, {
-        replace: true,
-        state: null,
-      });
+    if (!successMessage) return;
 
-      const timer = setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: null,
+    });
 
-      return () => clearTimeout(timer);
-    }
+    const timer = setTimeout(() => {
+      setSuccessMessage("");
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, [successMessage, navigate, location.pathname, location.search]);
 
+  // Handle input changes.
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -51,9 +59,11 @@ export default function Login() {
     setErrors((prev) => ({
       ...prev,
       [name]: "",
+      form: "",
     }));
   }
 
+  // Validate login form.
   function validate() {
     const newErrors = {};
 
@@ -68,6 +78,7 @@ export default function Login() {
     return newErrors;
   }
 
+  // Normal email/password login.
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -88,7 +99,9 @@ export default function Login() {
         replace: true,
       });
     } catch (error) {
-      setErrors({ form: error.message });
+      setErrors({
+        form: error.message,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -201,12 +214,28 @@ export default function Login() {
           </div>
 
           <div className="social-buttons">
-            <button type="button" aria-label="Google login">
-              G
-            </button>
-            {/* <button type="button" aria-label="GitHub login">GH</button>
-            <button type="button" aria-label="LinkedIn login">in</button> */}
+            <div
+              id="google-signin-button"
+              aria-label="Google sign-in"
+              style={{
+                width: "40px",
+                minWidth: "40px",
+                height: "40px",
+                minHeight: "40px",
+                flex: "0 0 40px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                overflow: "hidden",
+              }}
+            />
           </div>
+
+          {googleError && (
+            <span className="field-error" role="alert">
+              {googleError}
+            </span>
+          )}
 
           <div className="auth-footer">
             New to SplitTab? <Link to="/register">Create account</Link>

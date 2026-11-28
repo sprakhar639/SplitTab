@@ -1,50 +1,70 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+
+import { Link, useNavigate, useOutletContext } from "react-router-dom";
 
 import AuthVisual from "../components/AuthVisual";
+
 import { useAuth } from "../../../context/AuthContext";
+
 import "../styles/Auth.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 export default function Register() {
   const navigate = useNavigate();
+
   const { register } = useAuth();
+  const { googleError } = useOutletContext();
 
   const [formData, setFormData] = useState({
     name: "",
+
     username: "",
+
     email: "",
+
     password: "",
   });
 
   const [errors, setErrors] = useState({});
+
   const [serverError, setServerError] = useState("");
+
   const [loading, setLoading] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
+
+  // Handle input changes.
 
   function handleChange(e) {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
       ...prev,
+
       [name]: value,
     }));
 
     setErrors((prev) => ({
       ...prev,
+
       [name]: "",
     }));
 
     setServerError("");
   }
 
+  // Validate registration form.
+
   function validate() {
     const newErrors = {};
 
     const name = formData.name.trim();
+
     const username = formData.username.trim();
+
     const email = formData.email.trim();
 
     if (!name) {
@@ -75,22 +95,29 @@ export default function Register() {
     return newErrors;
   }
 
+  // Normal email/password registration.
+
   async function handleSubmit(e) {
     e.preventDefault();
 
     const validationErrors = validate();
+
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
       setLoading(true);
+
       setServerError("");
 
       await register({
         name: formData.name.trim(),
+
         username: formData.username.trim(),
+
         email: formData.email.trim(),
+
         password: formData.password,
       });
 
@@ -122,6 +149,7 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} noValidate autoComplete="off">
             {/* Full Name */}
+
             <div className="auth-field">
               <label htmlFor="name" className="cursor-default select-none">
                 Full name
@@ -148,6 +176,7 @@ export default function Register() {
             </div>
 
             {/* Username */}
+
             <div className="auth-field">
               <label htmlFor="username" className="cursor-default select-none">
                 Username
@@ -175,6 +204,7 @@ export default function Register() {
             </div>
 
             {/* Email */}
+
             <div className="auth-field">
               <label htmlFor="email" className="cursor-default select-none">
                 Email address
@@ -201,6 +231,7 @@ export default function Register() {
             </div>
 
             {/* Password */}
+
             <div className="auth-field">
               <label htmlFor="password" className="cursor-default select-none">
                 Password
@@ -237,6 +268,7 @@ export default function Register() {
             </div>
 
             {/* Backend Error */}
+
             {serverError && (
               <p
                 className="field-error cursor-default select-none"
@@ -247,17 +279,20 @@ export default function Register() {
             )}
 
             {/* Submit */}
+
             <button
               type="submit"
               className="auth-submit cursor-pointer"
               disabled={loading}
             >
               {loading ? "Creating account..." : "Create account"}
+
               {!loading && <span>→</span>}
             </button>
           </form>
 
           {/* Social Signup */}
+
           <div className="auth-divider cursor-default select-none">
             <span />
             or continue with
@@ -265,32 +300,31 @@ export default function Register() {
           </div>
 
           <div className="social-buttons">
-            <button
-              type="button"
-              className="cursor-pointer"
-              aria-label="Google signup"
-            >
-              G
-            </button>
-
-            {/* <button
-              type="button"
-              className="cursor-pointer"
-              aria-label="GitHub signup"
-            >
-              GH
-            </button>
-
-            <button
-              type="button"
-              className="cursor-pointer"
-              aria-label="LinkedIn signup"
-            >
-              in
-            </button> */}
+            <div
+              id="google-signin-button"
+              aria-label="Google sign-in"
+              style={{
+                width: "40px",
+                minWidth: "40px",
+                height: "40px",
+                minHeight: "40px",
+                flex: "0 0 40px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                overflow: "hidden",
+              }}
+            />
           </div>
 
+          {googleError && (
+            <span className="field-error" role="alert">
+              {googleError}
+            </span>
+          )}
+
           {/* Footer */}
+
           <div className="auth-footer cursor-default select-none">
             Already have an account?{" "}
             <Link to="/login" className="cursor-pointer">

@@ -134,7 +134,7 @@ export default function AuthVisual({ variant = "login" }) {
         <div className="preview-back preview-back-one" />
         <div className="preview-back preview-back-two" />
 
-        <div className="preview-card" key={activeSlide}>
+        <div className="preview-card">
           <div className="preview-header">
             <div className="preview-group-icon cursor-default select-none">
               {activeSlide === 0 ? "♧" : activeSlide === 1 ? "▤" : "↗"}

@@ -13,6 +13,7 @@ import {
 } from "./group.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
+import groupMiddleware from "../../middleware/groupMember.middleware.js";
 
 const router = Router();
 
@@ -21,24 +22,53 @@ router.post("/", authMiddleware, createGroupController);
 
 // Fetch groups
 router.get("/created", authMiddleware, groupsCreatedByUserController);
+
 router.get("/belongTo", authMiddleware, groupsUserBelongToController);
 
 // Group details
-router.get("/:groupId", authMiddleware, getGroupDetailsController);
+router.get(
+  "/:groupId",
+  authMiddleware,
+  groupMiddleware,
+  getGroupDetailsController,
+);
 
 // Group members
-router.get("/:groupId/members", authMiddleware, allGroupMembersController);
-router.post("/:groupId/members", authMiddleware, addMemberController);
+router.get(
+  "/:groupId/members",
+  authMiddleware,
+  groupMiddleware,
+  allGroupMembersController,
+);
+
+router.post(
+  "/:groupId/members",
+  authMiddleware,
+  groupMiddleware,
+  addMemberController,
+);
+
 router.delete(
   "/:groupId/members/:userId",
   authMiddleware,
+  groupMiddleware,
   removeMemberController,
 );
 
 // Update group
-router.patch("/:groupId", authMiddleware, updateGroupController);
+router.patch(
+  "/:groupId",
+  authMiddleware,
+  groupMiddleware,
+  updateGroupController,
+);
 
 // Delete group (soft delete)
-router.delete("/:groupId", authMiddleware, deleteGroupController);
+router.delete(
+  "/:groupId",
+  authMiddleware,
+  groupMiddleware,
+  deleteGroupController,
+);
 
 export default router;

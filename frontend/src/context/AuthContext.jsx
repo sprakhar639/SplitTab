@@ -51,7 +51,17 @@ export function AuthProvider({ children }) {
 
     const loggedInUser = await authService.fetchCurrentUser();
 
-    // Remove any stale conversation from a previous session.
+    clearAssistantConversation(loggedInUser.id);
+
+    setUser(loggedInUser);
+  }, []);
+
+  // GOOGLE LOGIN
+  const googleLogin = useCallback(async (credential) => {
+    await authService.googleLoginUser(credential);
+
+    const loggedInUser = await authService.fetchCurrentUser();
+
     clearAssistantConversation(loggedInUser.id);
 
     setUser(loggedInUser);
@@ -86,7 +96,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        googleLogin,
+        register,
+        logout,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

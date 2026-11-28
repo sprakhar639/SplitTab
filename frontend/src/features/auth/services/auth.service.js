@@ -8,6 +8,16 @@ export function loginUser(credentials) {
   return api.post("/auth/login", credentials);
 }
 
+// Google login with CSRF protection.
+export async function googleLoginUser(credential) {
+  const { csrfToken } = await api.get("/auth/google/csrf");
+
+  return api.post("/auth/google", {
+    credential,
+    csrfToken,
+  });
+}
+
 export function logoutUser() {
   return api.post("/auth/logout");
 }

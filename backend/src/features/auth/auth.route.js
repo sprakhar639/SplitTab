@@ -4,6 +4,8 @@ import authMiddleware from "../../middleware/auth.middleware.js";
 import {
   userRegister,
   userLogin,
+  googleLoginController,
+  googleCsrfTokenController,
   userLogout,
   currentUserController,
   updateProfileController,
@@ -17,6 +19,11 @@ const router = Router();
 // Authentication
 router.post("/register", userRegister);
 router.post("/login", userLogin);
+
+// Google authentication
+router.get("/google/csrf", googleCsrfTokenController);
+router.post("/google", googleLoginController);
+
 router.post("/logout", userLogout);
 
 // User profile

@@ -1,3 +1,5 @@
+import { randomBytes, timingSafeEqual } from "crypto";
+
 import {
   register,
   login,
@@ -13,6 +15,8 @@ import {
   resetPassword,
 } from "./services/password.service.js";
 
+import { googleLogin } from "./social-auth/social-auth.service.js";
+
 const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
@@ -22,6 +26,48 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/",
 };
+
+const googleCsrfCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 10 * 60 * 1000,
+  path: "/",
+};
+
+// GOOGLE CSRF TOKEN
+async function googleCsrfTokenController(req, res, next) {
+  try {
+    const csrfToken = randomBytes(32).toString("hex");
+
+    res.cookie("googleCsrfToken", csrfToken, googleCsrfCookieOptions);
+
+    res.set("Cache-Control", "no-store");
+
+    return res.status(200).json({
+      csrfToken,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Validate the double-submit CSRF token.
+function validateGoogleCsrfToken(cookieToken, submittedToken) {
+  if (
+    typeof cookieToken !== "string" ||
+    typeof submittedToken !== "string" ||
+    cookieToken.length !== 64 ||
+    submittedToken.length !== 64
+  ) {
+    return false;
+  }
+
+  return timingSafeEqual(
+    Buffer.from(cookieToken, "hex"),
+    Buffer.from(submittedToken, "hex"),
+  );
+}
 
 // REGISTER
 async function userRegister(req, res, next) {
@@ -47,6 +93,46 @@ async function userLogin(req, res, next) {
 
     return res.status(200).json({
       message: "Logged In Successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// GOOGLE LOGIN
+async function googleLoginController(req, res, next) {
+  try {
+    const { credential, csrfToken } = req.body;
+
+    const validCsrfToken = validateGoogleCsrfToken(
+      req.cookies?.googleCsrfToken,
+      csrfToken,
+    );
+
+    if (!validCsrfToken) {
+      return res.status(403).json({
+        message: "Google login CSRF validation failed. Please try again.",
+      });
+    }
+
+    if (!credential || typeof credential !== "string") {
+      return res.status(400).json({
+        message: "Google credential is required",
+      });
+    }
+
+    const { user, sessionToken } = await googleLogin(credential);
+
+    res.cookie("sessionId", sessionToken, cookieOptions);
+
+    res.clearCookie("googleCsrfToken", {
+      ...googleCsrfCookieOptions,
+      maxAge: undefined,
+    });
+
+    return res.status(200).json({
+      message: "Google login successful",
+      user,
     });
   } catch (error) {
     next(error);
@@ -165,6 +251,8 @@ async function resetPasswordController(req, res, next) {
 export {
   userRegister,
   userLogin,
+  googleLoginController,
+  googleCsrfTokenController,
   userLogout,
   currentUserController,
   updateProfileController,

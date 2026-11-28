@@ -277,6 +277,7 @@ async function getExpenseById(groupId, expenseId) {
 async function updateExpenseById(
   groupId,
   expenseId,
+  userId,
   { amount, description, splitType, participants, splits },
 ) {
   if (!Number.isSafeInteger(groupId) || groupId <= 0) {
@@ -285,6 +286,10 @@ async function updateExpenseById(
 
   if (!Number.isSafeInteger(expenseId) || expenseId <= 0) {
     throw new AppError("Invalid expense ID", 400);
+  }
+
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw new AppError("Invalid user ID", 400);
   }
 
   if (!Number.isSafeInteger(amount) || amount <= 0) {
@@ -298,7 +303,7 @@ async function updateExpenseById(
   return db.transaction(async (tx) => {
     const { Expense, ExpenseSplit, GroupMember } = tx.orm.public;
 
-    // 1. Find existing expense
+    // Find the active expense
     const expense = await Expense.where((ex) =>
       and(ex.groupId.eq(groupId), ex.id.eq(expenseId), ex.is_deleted.eq(false)),
     ).first();
@@ -307,9 +312,14 @@ async function updateExpenseById(
       throw new AppError("Expense not found", 404);
     }
 
+    // Verify expense ownership
+    if (expense.paidBy !== userId) {
+      throw new AppError("You are not authorized to update this expense", 403);
+    }
+
     let calculatedSplits;
 
-    // 2. Calculate new splits
+    // Calculate new splits
     if (splitType === "EQUAL") {
       calculatedSplits = equalSplit({
         amount,
@@ -321,7 +331,7 @@ async function updateExpenseById(
       throw new AppError("Invalid split type", 400);
     }
 
-    // 3. Validate split participants and amounts
+    // Validate split participants
     if (!Array.isArray(calculatedSplits) || calculatedSplits.length === 0) {
       throw new AppError("At least one participant is required", 400);
     }
@@ -335,6 +345,7 @@ async function updateExpenseById(
       throw new AppError("Invalid or duplicate participants", 400);
     }
 
+    // Validate split amounts
     if (
       calculatedSplits.some(
         (split) => !Number.isSafeInteger(split.amount) || split.amount <= 0,
@@ -352,7 +363,7 @@ async function updateExpenseById(
       throw new AppError("Split amounts must equal the expense amount", 400);
     }
 
-    // 4. Verify group membership
+    // Verify group membership of participants
     const memberships = await GroupMember.where((gm) =>
       and(gm.groupId.eq(groupId), gm.userId.in(userIds)),
     ).all();
@@ -361,18 +372,22 @@ async function updateExpenseById(
       throw new AppError("One or more participants are not group members", 403);
     }
 
-    // 5. Update expense
-    await Expense.where((ex) => ex.id.eq(expenseId)).update({
+    // Update the expense
+    await Expense.where((ex) =>
+      and(ex.id.eq(expenseId), ex.groupId.eq(groupId), ex.is_deleted.eq(false)),
+    ).update({
       description: description.trim(),
       amount,
     });
 
-    // 6. Delete previous splits
-    await ExpenseSplit.where((sp) => sp.expenseId.eq(expenseId)).updateAll({
+    // Soft-delete previous active splits
+    await ExpenseSplit.where((sp) =>
+      and(sp.expenseId.eq(expenseId), sp.is_deleted.eq(false)),
+    ).updateAll({
       is_deleted: true,
     });
 
-    // 7. Insert new splits
+    // Insert new splits
     const createdSplits = [];
 
     for (const split of calculatedSplits) {
@@ -394,7 +409,7 @@ async function updateExpenseById(
   });
 }
 
-async function deleteExpenseById(groupId, expenseId) {
+async function deleteExpenseById(groupId, expenseId, userId) {
   if (!Number.isSafeInteger(groupId) || groupId <= 0) {
     throw new AppError("Invalid group ID", 400);
   }
@@ -403,9 +418,14 @@ async function deleteExpenseById(groupId, expenseId) {
     throw new AppError("Invalid expense ID", 400);
   }
 
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw new AppError("Invalid user ID", 400);
+  }
+
   return db.transaction(async (tx) => {
     const { Expense, ExpenseSplit } = tx.orm.public;
 
+    // Find the active expense
     const expense = await Expense.where((ex) =>
       and(ex.id.eq(expenseId), ex.groupId.eq(groupId), ex.is_deleted.eq(false)),
     ).first();
@@ -414,12 +434,25 @@ async function deleteExpenseById(groupId, expenseId) {
       throw new AppError("Expense not found", 404);
     }
 
-    await Expense.where((ex) => ex.id.eq(expenseId)).update({
+    //  Verify expense ownership
+    if (expense.paidBy !== userId) {
+      throw new AppError("You are not authorized to delete this expense", 403);
+    }
+
+    // Soft-delete the expense
+    await Expense.where((ex) =>
+      and(ex.id.eq(expenseId), ex.groupId.eq(groupId), ex.is_deleted.eq(false)),
+    ).update({
       is_deleted: true,
     });
-    await ExpenseSplit.where((sp) => sp.expenseId.eq(expenseId)).updateAll({
+
+    // Soft-delete active splits
+    await ExpenseSplit.where((sp) =>
+      and(sp.expenseId.eq(expenseId), sp.is_deleted.eq(false)),
+    ).updateAll({
       is_deleted: true,
     });
+
     return { success: true };
   });
 }
